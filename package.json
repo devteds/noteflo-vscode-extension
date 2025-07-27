@@ -4,6 +4,7 @@
   "description": "Professional workflow: time tracking, notes, todos, and invoicing for consultants and freelancers",
   "version": "1.0.0",
   "publisher": "devteds",
+  "icon": "assets/noteflo-icon.png",
   "author": {
     "name": "Chandra Shettigar",
     "email": "chandra@devteds.com",

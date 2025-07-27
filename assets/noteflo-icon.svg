@@ -1,0 +1,99 @@
+<svg viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="blueGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0099ff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#007ACC;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="darkGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2d2d2d;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1E1E1E;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Main container centered -->
+  <g transform="translate(128,128)">
+    
+    <!-- Background circle -->
+    <circle cx="0" cy="0" r="110" fill="white" stroke="#e9ecef" stroke-width="3"/>
+    
+    <!-- Primary: Large notepad/document -->
+    <g transform="translate(-35,-20)">
+      <!-- Document background -->
+      <rect x="0" y="0" width="70" height="90" rx="6" ry="6" fill="white" stroke="url(#darkGradient)" stroke-width="2.5"/>
+      
+      <!-- Document header -->
+      <rect x="0" y="0" width="70" height="18" rx="6" ry="6" fill="url(#blueGradient)"/>
+      <rect x="0" y="12" width="70" height="6" fill="url(#blueGradient)"/>
+      
+      <!-- Document lines -->
+      <line x1="8" y1="30" x2="62" y2="30" stroke="#d6d6d6" stroke-width="1.5"/>
+      <line x1="8" y1="40" x2="55" y2="40" stroke="#d6d6d6" stroke-width="1.5"/>
+      <line x1="8" y1="50" x2="60" y2="50" stroke="#d6d6d6" stroke-width="1.5"/>
+      <line x1="8" y1="60" x2="45" y2="60" stroke="#d6d6d6" stroke-width="1.5"/>
+      
+      <!-- Checklist items -->
+      <circle cx="12" cy="30" r="3" fill="none" stroke="url(#blueGradient)" stroke-width="1.5"/>
+      <path d="M 10 30 L 11.5 31.5 L 14 29" fill="none" stroke="url(#blueGradient)" stroke-width="1.5" stroke-linecap="round"/>
+      
+      <circle cx="12" cy="40" r="3" fill="none" stroke="#d6d6d6" stroke-width="1.5"/>
+      <circle cx="12" cy="50" r="3" fill="none" stroke="url(#blueGradient)" stroke-width="1.5"/>
+      <path d="M 10 50 L 11.5 51.5 L 14 49" fill="none" stroke="url(#blueGradient)" stroke-width="1.5" stroke-linecap="round"/>
+    </g>
+    
+    <!-- Secondary: Clock/stopwatch (top right) -->
+    <g transform="translate(45,-45)">
+      <!-- Clock background -->
+      <circle cx="0" cy="0" r="25" fill="url(#blueGradient)" stroke="white" stroke-width="2"/>
+      
+      <!-- Clock face -->
+      <circle cx="0" cy="0" r="18" fill="none" stroke="white" stroke-width="1.5"/>
+      
+      <!-- Clock markings -->
+      <line x1="0" y1="-15" x2="0" y2="-12" stroke="white" stroke-width="2"/>
+      <line x1="15" y1="0" x2="12" y2="0" stroke="white" stroke-width="1.5"/>
+      <line x1="0" y1="15" x2="0" y2="12" stroke="white" stroke-width="1.5"/>
+      <line x1="-15" y1="0" x2="-12" y2="0" stroke="white" stroke-width="1.5"/>
+      
+      <!-- Clock hands -->
+      <line x1="0" y1="0" x2="0" y2="-8" stroke="white" stroke-width="2" stroke-linecap="round"/>
+      <line x1="0" y1="0" x2="6" y2="-3" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+      
+      <!-- Center dot -->
+      <circle cx="0" cy="0" r="2" fill="white"/>
+    </g>
+    
+    <!-- Workflow arrows connecting elements -->
+    <g stroke="url(#blueGradient)" stroke-width="2.5" fill="none" stroke-linecap="round">
+      <!-- Arrow from document to clock -->
+      <path d="M 15 -35 Q 25 -40 35 -35" marker-end="url(#arrowhead)"/>
+      
+      <!-- Arrow flowing down and around -->
+      <path d="M 45 -15 Q 55 0 45 20 Q 35 30 15 25" marker-end="url(#arrowhead)"/>
+      
+      <!-- Small connecting flow -->
+      <path d="M -15 35 Q 0 45 20 35" marker-end="url(#arrowhead)"/>
+    </g>
+    
+    <!-- Accent: Small productivity icons -->
+    <!-- Dollar sign (invoicing) -->
+    <g transform="translate(55,35)">
+      <circle cx="0" cy="0" r="12" fill="white" stroke="url(#darkGradient)" stroke-width="1.5"/>
+      <text x="0" y="4" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="url(#blueGradient)">$</text>
+    </g>
+    
+    <!-- Progress indicator -->
+    <g transform="translate(-55,35)">
+      <circle cx="0" cy="0" r="12" fill="white" stroke="url(#darkGradient)" stroke-width="1.5"/>
+      <circle cx="0" cy="0" r="8" fill="none" stroke="url(#blueGradient)" stroke-width="2" stroke-dasharray="15,5" stroke-linecap="round" transform="rotate(-90)"/>
+    </g>
+    
+  </g>
+  
+  <!-- Arrow marker definition -->
+  <defs>
+    <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#007ACC"/>
+    </marker>
+  </defs>
+  
+</svg>
