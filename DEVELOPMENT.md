@@ -539,6 +539,14 @@ git push origin v1.0.0
 npx @vscode/vsce publish
 ```
 
+### Publishing to VS Code Marketplace
+
+For complete publishing instructions, see **[PUBLISH.md](./PUBLISH.md)** which covers:
+- Publisher account setup and domain verification
+- Personal Access Token configuration  
+- Publishing commands and troubleshooting
+- Post-publishing checklist
+
 ### Version Management
 
 Update version in `package.json`:
