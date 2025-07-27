@@ -17,12 +17,9 @@ RUN apt-get update && apt-get install -y \
     # Cleanup
     && rm -rf /var/lib/apt/lists/*
 
-# Install global npm packages for VSCode extension development
+# Install essential global packages for development
 RUN npm install -g \
-    @vscode/vsce \
-    typescript \
-    ts-node \
-    eslint
+    typescript
 
 # Set working directory
 WORKDIR /workspace

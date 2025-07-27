@@ -4,10 +4,29 @@
   "description": "Professional workflow: time tracking, notes, todos, and invoicing for consultants and freelancers",
   "version": "1.0.0",
   "publisher": "devteds",
+  "author": {
+    "name": "Chandra Shettigar",
+    "email": "chandra@devteds.com",
+    "url": "https://github.com/shettigarc"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/devteds/noteflo-vscode-extension"
   },
+  "homepage": "https://www.devteds.com",
+  "bugs": {
+    "url": "https://github.com/devteds/noteflo-vscode-extension/issues"
+  },
+  "keywords": [
+    "time-tracking",
+    "invoicing",
+    "notes",
+    "productivity",
+    "consulting",
+    "freelancing",
+    "workflow",
+    "pdf-generation"
+  ],
   "engines": {
     "vscode": "^1.60.0"
   },
@@ -226,15 +245,14 @@
     "compile": "node esbuild.js",
     "watch": "node esbuild.js --watch",
     "package": "node esbuild.js --production",
-    "compile-tests": "tsc -p . --outDir out",
-    "watch-tests": "tsc -p . -w --outDir out",
-    "dev-install": "npm run package && npx @vscode/vsce package --baseContentUrl https://raw.githubusercontent.com/placeholder/repo/main/ && code --install-extension noteflo-1.0.0.vsix --force"
+    "dev-install": "npm run package && npx @vscode/vsce package && code --install-extension noteflo-1.0.0.vsix --force"
   },
   "devDependencies": {
     "@types/node": "16.x",
     "@types/vscode": "^1.60.0",
     "@typescript-eslint/eslint-plugin": "^5.45.0",
     "@typescript-eslint/parser": "^5.45.0",
+    "@vscode/vsce": "^3.6.0",
     "esbuild": "^0.25.8",
     "eslint": "^8.28.0",
     "typescript": "^4.9.4"

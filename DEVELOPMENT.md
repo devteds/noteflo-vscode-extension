@@ -77,51 +77,73 @@ interface NoteFloConfig {
 
 - **Node.js** 20+ (for TypeScript compilation and VS Code extension packaging)
 - **VS Code** 1.60+ (for testing and debugging)
-- **TypeScript** 4.0+ (installed via npm)
+- **TypeScript** 4.9+ (installed via npm)
 - **Git** (for version control)
 
 ### Initial Setup
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-org/noteflo-extension.git
-cd noteflo-extension
+git clone https://github.com/devteds/noteflo-vscode-extension.git
+cd noteflo-vscode-extension
 
 # Install dependencies
 npm install
-
-# Install VS Code Extension CLI (optional, for packaging)
-npm install -g @vscode/vsce
 ```
 
 ### Development Workflow
 
 ```bash
-# Compile TypeScript
+# Development build (with source maps)
 npm run compile
 
-# Watch mode for development
+# Watch mode for development (rebuilds on changes)
 npm run watch
 
-# Package for testing
-npx @vscode/vsce package --baseContentUrl https://raw.githubusercontent.com/placeholder/repo/main/
+# Production build (minified, optimized)
+npm run package
 
-# Alternative with repository bypass
-npx @vscode/vsce package --allow-missing-repository
+# Package for testing
+npx @vscode/vsce package
 
 # Install locally for testing
-code --install-extension noteflo-*.vsix
+code --install-extension noteflo-1.0.0.vsix --force
+
+# One-command development install
+npm run dev-install
+```
+
+### Build Output Structure
+
+```
+dist/          # esbuild bundled output (used by extension)
+└── extension.js       # Single bundled file (854KB, includes all dependencies)
+
+# Note: No "out/" folder needed with esbuild
+# Old TypeScript compiler used "out/" but esbuild uses "dist/"
 ```
 
 ### Testing the Extension
 
-1. **Manual Testing**:
+1. **Development Installation**:
+   ```bash
+   npm run dev-install
+   ```
+   Then reload VS Code window (`Ctrl+Shift+P` → "Developer: Reload Window")
+
+2. **Manual Testing**:
    - Install the VSIX in a test VS Code instance
    - Open a test workspace
    - Run `NoteFlo: Configure` to set up configuration
    - Test all commands and features
 
-2. **Debugging**:
+3. **Function Testing**:
+   ```bash
+   # Test specific functions without full extension
+   node test-extension.js
+   ```
+
+4. **Debugging**:
    - Open the extension source in VS Code
    - Press `F5` to launch Extension Development Host
    - Set breakpoints in TypeScript source
@@ -139,15 +161,9 @@ code --install-extension noteflo-*.vsix
 
 ```typescript
 export function activate(context: vscode.ExtensionContext) {
-  // Initialize modules
-  timeTracker = new TimeTracker(workspaceRoot);
-  noteCreator = new NoteCreator(workspaceRoot);
-  invoiceGenerator = new InvoiceGenerator(workspaceRoot);
-  
-  // Register commands
-  context.subscriptions.push(
-    vscode.commands.registerCommand('noteflo.startTimeTracking', ...)
-  );
+  // Initialize modules based on workspace availability
+  // Always register commands (check workspace in each command)
+  // Register sidebar and status bar integration
 }
 ```
 
@@ -195,6 +211,7 @@ export function activate(context: vscode.ExtensionContext) {
 - Quick access to all features
 - Real-time status updates
 - Context-sensitive actions
+- Handles no-workspace scenarios gracefully
 
 ### Data Storage Strategy
 
@@ -229,7 +246,67 @@ docs/
 - **Monthly rotation**: Prevents large files, improves performance
 - **Git integration**: Automatic `.gitignore` management
 
-## 🔧 Timezone Implementation
+## 🔧 Modern Build System (esbuild)
+
+### Why esbuild?
+
+NoteFlo uses **esbuild** instead of webpack for modern, fast bundling:
+
+- ⚡ **10-100x faster** than webpack
+- 🎯 **VS Code official recommendation** (2023+)
+- 🔧 **Simpler configuration**
+- 📦 **Better tree-shaking**
+- 🚀 **Active development**
+
+### Build Configuration
+
+#### `esbuild.js` - Build Configuration
+```javascript
+const esbuild = require('esbuild');
+
+const production = process.argv.includes('--production');
+const watch = process.argv.includes('--watch');
+
+// esbuild configuration for VS Code extension
+const ctx = await esbuild.context({
+  entryPoints: ['src/extension.ts'],
+  bundle: true,
+  format: 'cjs',
+  minify: production,
+  sourcemap: !production,
+  platform: 'node',
+  outfile: 'dist/extension.js',
+  external: ['vscode'],
+  // ... additional configuration
+});
+```
+
+#### Build Scripts
+```json
+{
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "compile": "node esbuild.js",
+    "watch": "node esbuild.js --watch", 
+    "package": "node esbuild.js --production",
+    "dev-install": "npm run package && npx @vscode/vsce package && code --install-extension noteflo-1.0.0.vsix --force"
+  }
+}
+```
+
+### Bundle Optimization
+
+**Results:**
+- **Before**: 6.6 MB (with node_modules)
+- **After**: 265 KB (96% reduction!)
+
+**Benefits:**
+- ⚡ Lightning fast builds
+- 📦 Tiny packages for distribution
+- 🚀 VS Code marketplace ready
+- 💼 Professional deployment
+
+## 🌐 Timezone Implementation
 
 ### Utility Functions
 
@@ -246,10 +323,10 @@ export function getConfiguredTimezone(workspaceRoot: string): string
 
 ### Format Types
 
-- **`iso`**: `2024-07-27T10:30:00` (for file storage)
-- **`readable`**: `July 27, 2024 at 10:30 AM` (for UI display)
-- **`date-only`**: `2024-07-27` (for date inputs)
-- **`date-time`**: `07/27/2024, 10:30 AM` (for meeting notes)
+- **`iso`**: `2025-01-27T10:30:00` (for file storage)
+- **`readable`**: `January 27, 2025 at 10:30 AM` (for UI display)
+- **`date-only`**: `2025-01-27` (for date inputs)
+- **`date-time`**: `01/27/2025, 10:30 AM` (for meeting notes)
 
 ### Integration Points
 
@@ -306,12 +383,17 @@ The PDF system automatically handles page breaks:
 ### Command Registration
 
 ```typescript
-// In extension.ts
-const commandId = 'noteflo.commandName';
-const disposable = vscode.commands.registerCommand(commandId, () => {
-  // Command implementation
-});
-context.subscriptions.push(disposable);
+// In extension.ts - Always register commands, check workspace in implementation
+const configureCommand = vscode.commands.registerCommand(
+  'noteflo.configure',
+  () => {
+    const workspace = requireWorkspace('Configure NoteFlo');
+    if (workspace) {
+      const invoiceGenerator = new InvoiceGenerator(workspace);
+      return invoiceGenerator.configureNoteFlo();
+    }
+  }
+);
 ```
 
 ### Status Bar Integration
@@ -327,6 +409,24 @@ private createStatusBar(): void {
   );
   this.statusBarItem.command = 'noteflo.timeStatus';
   this.statusBarItem.show();
+}
+```
+
+### Sidebar Integration
+
+```typescript
+// In providers/sidebarProvider.ts
+export class SidebarProvider implements vscode.TreeDataProvider<SidebarItem> {
+  // Handle no-workspace case gracefully
+  getChildren(element?: SidebarItem): SidebarItem[] {
+    if (!this.workspaceRoot) {
+      return [
+        new SidebarItem('📁 Open Workspace', vscode.TreeItemCollapsibleState.None, 'folder-opened', 'workbench.action.files.openFolder'),
+        new SidebarItem('ℹ️ NoteFlo requires a workspace', vscode.TreeItemCollapsibleState.None, 'info')
+      ];
+    }
+    // ... normal workspace handling
+  }
 }
 ```
 
@@ -349,42 +449,94 @@ private safeWriteJson(filePath: string, data: any): void {
 }
 ```
 
-### User Input Patterns
+## 🐳 DevContainer Development
 
-```typescript
-// Interactive prompts with validation
-const input = await vscode.window.showInputBox({
-  prompt: 'Description',
-  validateInput: (value) => {
-    return value.trim() ? null : 'Description is required';
+### Dockerfile Optimization
+
+```dockerfile
+# Use Node 20 LTS as base image for VSCode extension development
+FROM node:20-bullseye
+
+# Install system dependencies for PDF generation and development
+RUN apt-get update && apt-get install -y \
+    # PDF generation dependencies
+    libcairo2-dev \
+    libpango1.0-dev \
+    libjpeg-dev \
+    libgif-dev \
+    librsvg2-dev \
+    # Development tools
+    git \
+    curl \
+    wget \
+    vim \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install essential global packages for development
+RUN npm install -g \
+    @vscode/vsce \
+    typescript
+
+# Set working directory
+WORKDIR /workspace
+
+# Change ownership of workspace to existing node user
+RUN chown -R node:node /workspace
+
+# Switch to non-root user
+USER node
+
+# Set default shell for interactive terminal
+ENV SHELL /bin/bash
+```
+
+### DevContainer Configuration
+
+```json
+{
+  "name": "NoteFlo Extension Development",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "20"
+    }
   }
-});
-if (!input) return; // User cancelled
+}
 ```
 
-## 🔄 Build & Release Process
+## 📦 Build & Release Process
 
-### Compilation
+### Development Testing
 
 ```bash
-# TypeScript compilation
-npm run compile
+# Quick development cycle
+npm run dev-install
 
-# Watch mode for development
-npm run watch
+# Manual process
+npm run package                    # Build
+npx @vscode/vsce package          # Package  
+code --install-extension noteflo-1.0.0.vsix --force  # Install
+# Reload VS Code window
 ```
 
-### Packaging
+### Production Release
 
 ```bash
-# Create VSIX package
-npx vsce package
+# 1. Update version in package.json
+# 2. Update CHANGELOG.md
+# 3. Test thoroughly
+npm run package
+npx @vscode/vsce package
 
-# With custom filename
-npx vsce package --out noteflo-v1.0.0.vsix
+# 4. Test VSIX in clean environment
+# 5. Create Git tag
+git tag v1.0.0
+git push origin v1.0.0
 
-# Skip repository requirement for development
-npx vsce package --allow-missing-repository
+# 6. Publish to marketplace (when ready)
+npx @vscode/vsce publish
 ```
 
 ### Version Management
@@ -395,21 +547,6 @@ Update version in `package.json`:
   "version": "1.0.0"
 }
 ```
-
-The version appears in:
-- Extension marketplace listing
-- Generated VSIX filename
-- VS Code extension manager
-
-### Release Checklist
-
-1. **Test all features** in development environment
-2. **Update version** in `package.json`
-3. **Update changelog** with new features/fixes
-4. **Compile and package** extension
-5. **Test VSIX** in clean VS Code instance
-6. **Create Git tag** for release
-7. **Upload to marketplace** (when ready)
 
 ## 🤝 Contributing Guidelines
 
@@ -437,13 +574,12 @@ try {
 ### File Operations
 
 ```typescript
-// Always check for file existence
+// Always check for file existence and handle errors
 if (!fs.existsSync(filePath)) {
   // Handle missing file case
   return;
 }
 
-// Use try-catch for file operations
 try {
   const content = fs.readFileSync(filePath, 'utf8');
   return JSON.parse(content);
@@ -476,10 +612,11 @@ try {
 ### Common Issues
 
 1. **Extension not activating**: Check `activationEvents` in `package.json`
-2. **Commands not found**: Verify command registration in `extension.ts`
+2. **Commands not found**: Verify workspace requirement and command registration
 3. **File access errors**: Check workspace permissions and paths
 4. **Timezone issues**: Test with different timezone configurations
-5. **PDF generation fails**: Check jsPDF version and browser compatibility
+5. **PDF generation fails**: Check jsPDF dependencies and browser compatibility
+6. **Sidebar shows "no data provider"**: Ensure tree data provider is always registered
 
 ### Debugging Techniques
 
@@ -491,12 +628,30 @@ try {
 
 ### Performance Considerations
 
-1. **File size**: Monitor time entry file sizes (monthly rotation helps)
+1. **Bundle size**: Monitor esbuild output size (target <500KB)
 2. **PDF generation**: Large invoices may take time to generate
 3. **Status bar updates**: 5-second intervals balance responsiveness and performance
 4. **Notes scanning**: Optimize for large numbers of notes
 
+## 📚 Resources
+
+### Documentation
+- [VS Code Extension API](https://code.visualstudio.com/api)
+- [esbuild Documentation](https://esbuild.github.io/)
+- [TypeScript Handbook](https://www.typescriptlang.org/docs/)
+
+### Related Projects
+- [Foam](https://foambubble.github.io/) - Note-taking extension
+- [VS Code Extension Samples](https://github.com/microsoft/vscode-extension-samples)
+
 ---
+
+## 👨‍💻 **Maintainers**
+
+**Author**: [Chandra Shettigar](https://github.com/shettigarc)  
+**Organization**: [Devteds](https://github.com/devteds)  
+**Website**: [devteds.com](https://www.devteds.com)  
+**Contact**: [chandra@devteds.com](mailto:chandra@devteds.com)
 
 This development guide provides the foundation for working on NoteFlo. For questions or clarifications, please open an issue in the repository.
 
