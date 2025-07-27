@@ -32,8 +32,7 @@
   },
   "categories": [
     "Other",
-    "Notebooks",
-    "Productivity"
+    "Notebooks"
   ],
   "activationEvents": [
     "onStartupFinished",
@@ -247,7 +246,7 @@
     "package": "node esbuild.js --production",
     "dev-install": "npm run package && npx @vscode/vsce package && code --install-extension noteflo-1.0.0.vsix --force",
     "package-vsix": "npm run package && npx @vscode/vsce package",
-    "publish:dry-run": "npm run package && npx @vscode/vsce publish --dry-run",
+    "publish:dry-run": "npm run package && npx @vscode/vsce package",
     "publish": "npm run package && npx @vscode/vsce publish"
   },
   "devDependencies": {

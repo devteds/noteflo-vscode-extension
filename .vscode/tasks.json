@@ -189,7 +189,7 @@
       "detail": "Create VSIX package for distribution"
     },
     {
-      "label": "🧪 Publish (Dry Run)",
+      "label": "🧪 Test Package Creation",
       "type": "npm",
       "script": "publish:dry-run",
       "group": "build",
@@ -202,7 +202,7 @@
         "clear": false
       },
       "problemMatcher": [],
-      "detail": "Test publishing process without actually publishing"
+      "detail": "Create VSIX package to test before publishing (vsce has no dry-run option)"
     },
     {
       "label": "🚀 Publish to Marketplace",

@@ -129,7 +129,7 @@ source .env
 # Create VSIX package only
 npm run package-vsix
 
-# Dry run (test without publishing)
+# Test packaging (creates VSIX file for verification)
 npm run publish:dry-run
 
 # Publish to marketplace
@@ -141,8 +141,8 @@ npm run publish
 # Ensure environment variables are loaded
 source .env
 
-# Dry run (test without publishing)
-npx @vscode/vsce publish --dry-run
+# Test packaging first (vsce publish has no dry-run option)
+npx @vscode/vsce package
 
 # Publish to marketplace
 npx @vscode/vsce publish
@@ -198,6 +198,11 @@ jobs:
 - Check `.vscodeignore` excludes unnecessary files
 - Verify esbuild is bundling correctly
 - Target size: < 2MB
+
+**"Category not available"**
+- Use only valid VS Code extension categories
+- Valid categories: Azure, Data Science, Debuggers, Extension Packs, Formatters, Keymaps, Language Packs, Linters, Machine Learning, Notebooks, Other, Programming Languages, SCM Providers, Snippets, Testing, Themes, Visualization
+- Remove invalid categories like "Productivity"
 
 **"Authentication failed"**
 - Verify PAT is not expired
