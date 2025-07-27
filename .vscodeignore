@@ -13,8 +13,7 @@ REPOSITORY_SETUP.md
 src/
 tsconfig.json
 
-# Node.js and dependencies
-node_modules/
+# Node.js logs and lock file (but keep node_modules for runtime dependencies)
 npm-debug.log*
 package-lock.json
 

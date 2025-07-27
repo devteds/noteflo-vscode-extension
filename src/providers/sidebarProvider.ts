@@ -1,6 +1,6 @@
-import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as vscode from 'vscode';
 
 export class SidebarProvider implements vscode.TreeDataProvider<SidebarItem> {
   private _onDidChangeTreeData: vscode.EventEmitter<SidebarItem | undefined | null | void> = new vscode.EventEmitter<SidebarItem | undefined | null | void>();
@@ -18,6 +18,14 @@ export class SidebarProvider implements vscode.TreeDataProvider<SidebarItem> {
 
   getChildren(element?: SidebarItem): SidebarItem[] {
     if (!element) {
+      // Handle no workspace case
+      if (!this.workspaceRoot) {
+        return [
+          new SidebarItem('📁 Open Workspace', vscode.TreeItemCollapsibleState.None, 'folder-opened', 'workbench.action.files.openFolder'),
+          new SidebarItem('ℹ️ NoteFlo requires a workspace', vscode.TreeItemCollapsibleState.None, 'info')
+        ];
+      }
+
       const configExists = this.checkConfigExists();
       const items: SidebarItem[] = [];
 
@@ -52,6 +60,9 @@ export class SidebarProvider implements vscode.TreeDataProvider<SidebarItem> {
   }
 
   private checkConfigExists(): boolean {
+    if (!this.workspaceRoot) {
+      return false;
+    }
     const configPath = path.join(this.workspaceRoot, '.noteflo', 'config.json');
     return fs.existsSync(configPath);
   }

@@ -17,11 +17,17 @@
     "Productivity"
   ],
   "activationEvents": [
-    "onStartupFinished"
+    "onStartupFinished",
+    "onView:noteFloSidebar"
   ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
+      {
+        "command": "noteflo.test",
+        "title": "Test NoteFlo",
+        "category": "NoteFlo"
+      },
       {
         "command": "noteflo.startTimeTracking",
         "title": "Start Time Tracking",

@@ -1,9 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SidebarProvider = void 0;
-const vscode = require("vscode");
 const fs = require("fs");
 const path = require("path");
+const vscode = require("vscode");
 class SidebarProvider {
     constructor(workspaceRoot) {
         this.workspaceRoot = workspaceRoot;
@@ -18,6 +18,13 @@ class SidebarProvider {
     }
     getChildren(element) {
         if (!element) {
+            // Handle no workspace case
+            if (!this.workspaceRoot) {
+                return [
+                    new SidebarItem('📁 Open Workspace', vscode.TreeItemCollapsibleState.None, 'folder-opened', 'workbench.action.files.openFolder'),
+                    new SidebarItem('ℹ️ NoteFlo requires a workspace', vscode.TreeItemCollapsibleState.None, 'info')
+                ];
+            }
             const configExists = this.checkConfigExists();
             const items = [];
             // Configuration status
@@ -37,6 +44,9 @@ class SidebarProvider {
         return [];
     }
     checkConfigExists() {
+        if (!this.workspaceRoot) {
+            return false;
+        }
         const configPath = path.join(this.workspaceRoot, '.noteflo', 'config.json');
         return fs.existsSync(configPath);
     }

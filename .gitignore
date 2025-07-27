@@ -197,3 +197,4 @@ local_config.json
 # Build
 *.vsix
 build/*
+/*.vsix
