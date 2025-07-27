@@ -227,7 +227,8 @@
     "watch": "node esbuild.js --watch",
     "package": "node esbuild.js --production",
     "compile-tests": "tsc -p . --outDir out",
-    "watch-tests": "tsc -p . -w --outDir out"
+    "watch-tests": "tsc -p . -w --outDir out",
+    "dev-install": "npm run package && npx @vscode/vsce package --baseContentUrl https://raw.githubusercontent.com/placeholder/repo/main/ && code --install-extension noteflo-1.0.0.vsix --force"
   },
   "devDependencies": {
     "@types/node": "16.x",

@@ -26,6 +26,7 @@ out/
 test/
 *.test.ts
 *.test.js
+test-extension.js
 
 # Source maps (optional - remove for smaller packages)
 dist/**/*.map
