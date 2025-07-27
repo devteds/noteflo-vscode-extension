@@ -9,21 +9,26 @@ DEVELOPMENT.md
 PROJECT_CONTEXT.md
 REPOSITORY_SETUP.md
 
-# TypeScript source files (compiled to out/)
+# TypeScript source files (bundled to dist/)
 src/
 tsconfig.json
+esbuild.js
 
-# Node.js logs and lock file (but keep node_modules for runtime dependencies)
+# Node.js and dependencies (bundled by esbuild)
+node_modules/
 npm-debug.log*
 package-lock.json
+
+# Old TypeScript output (replaced by dist/)
+out/
 
 # Test files
 test/
 *.test.ts
 *.test.js
 
-# Compiled output maps (optional)
-out/**/*.map
+# Source maps (optional - remove for smaller packages)
+dist/**/*.map
 
 # VS Code extension packaging
 *.vsix
