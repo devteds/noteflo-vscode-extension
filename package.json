@@ -1,0 +1,234 @@
+{
+  "name": "noteflo",
+  "displayName": "NoteFlo",
+  "description": "Professional workflow: time tracking, notes, todos, and invoicing for consultants and freelancers",
+  "version": "1.0.0",
+  "publisher": "devteds",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/devteds/noteflo-vscode-extension"
+  },
+  "engines": {
+    "vscode": "^1.60.0"
+  },
+  "categories": [
+    "Other",
+    "Notebooks",
+    "Productivity"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "noteflo.startTimeTracking",
+        "title": "Start Time Tracking",
+        "category": "NoteFlo"
+      },
+      {
+        "command": "noteflo.stopTimeTracking",
+        "title": "Stop Time Tracking",
+        "category": "NoteFlo"
+      },
+      {
+        "command": "noteflo.timeStatus",
+        "title": "Time Status",
+        "category": "NoteFlo"
+      },
+      {
+        "command": "noteflo.newMeetingNote",
+        "title": "New Meeting Note",
+        "category": "NoteFlo"
+      },
+      {
+        "command": "noteflo.quickTodo",
+        "title": "Quick Todo",
+        "category": "NoteFlo"
+      },
+      {
+        "command": "noteflo.generateInvoice",
+        "title": "Generate Invoice",
+        "category": "NoteFlo"
+      },
+      {
+        "command": "noteflo.openDashboard",
+        "title": "Open Dashboard",
+        "category": "NoteFlo"
+      },
+      {
+        "command": "noteflo.enterTime",
+        "title": "Enter Time (Offline Work)",
+        "category": "NoteFlo"
+      },
+      {
+        "command": "noteflo.updateNotesIndex",
+        "title": "Update Notes Index",
+        "category": "NoteFlo"
+      },
+      {
+        "command": "noteflo.viewInvoices",
+        "title": "View Invoices",
+        "category": "NoteFlo"
+      },
+      {
+        "command": "noteflo.configure",
+        "title": "Configure NoteFlo",
+        "category": "NoteFlo"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "noteflo.newMeetingNote",
+        "key": "cmd+k m",
+        "mac": "cmd+k m"
+      },
+      {
+        "command": "noteflo.quickTodo",
+        "key": "cmd+k t",
+        "mac": "cmd+k t"
+      },
+      {
+        "command": "noteflo.startTimeTracking",
+        "key": "cmd+k s",
+        "mac": "cmd+k s"
+      },
+      {
+        "command": "noteflo.stopTimeTracking",
+        "key": "cmd+k e",
+        "mac": "cmd+k e"
+      },
+      {
+        "command": "noteflo.enterTime",
+        "key": "cmd+k h",
+        "mac": "cmd+k h"
+      },
+      {
+        "command": "noteflo.updateNotesIndex",
+        "key": "cmd+k u",
+        "mac": "cmd+k u"
+      },
+      {
+        "command": "noteflo.generateInvoice",
+        "key": "cmd+k i",
+        "mac": "cmd+k i"
+      },
+      {
+        "command": "noteflo.viewInvoices",
+        "key": "cmd+k v",
+        "mac": "cmd+k v"
+      },
+      {
+        "command": "noteflo.configure",
+        "key": "cmd+k c",
+        "mac": "cmd+k c"
+      }
+    ],
+    "views": {
+      "explorer": [
+        {
+          "id": "noteFloSidebar",
+          "name": "NoteFlo",
+          "when": "workspaceHasNoteFloConfig || true"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "NoteFlo",
+      "properties": {
+        "noteflo.hourlyRate": {
+          "type": "number",
+          "default": 8500,
+          "description": "Hourly rate for this client"
+        },
+        "noteflo.currency": {
+          "type": "string",
+          "default": "INR",
+          "description": "Currency for invoicing"
+        },
+        "noteflo.businessName": {
+          "type": "string",
+          "default": "",
+          "description": "Your business/freelancer name"
+        },
+        "noteflo.businessAddress": {
+          "type": "string",
+          "default": "",
+          "description": "Your business address (use \\n for line breaks)"
+        },
+        "noteflo.businessEmail": {
+          "type": "string",
+          "default": "",
+          "description": "Your business email"
+        },
+        "noteflo.businessPhone": {
+          "type": "string",
+          "default": "",
+          "description": "Your business phone number"
+        },
+        "noteflo.businessWebsite": {
+          "type": "string",
+          "default": "",
+          "description": "Your business website"
+        },
+        "noteflo.logoPath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to your business logo (relative to workspace)"
+        },
+        "noteflo.clientName": {
+          "type": "string",
+          "default": "",
+          "description": "Client/company name"
+        },
+        "noteflo.clientContact": {
+          "type": "string",
+          "default": "",
+          "description": "Client contact person"
+        },
+        "noteflo.clientAddress": {
+          "type": "string",
+          "default": "",
+          "description": "Client address (use \\n for line breaks)"
+        },
+        "noteflo.clientEmail": {
+          "type": "string",
+          "default": "",
+          "description": "Client email"
+        },
+        "noteflo.taxRate": {
+          "type": "number",
+          "default": 0,
+          "description": "Tax rate percentage (e.g., 18 for 18%)"
+        },
+        "noteflo.paymentInstructions": {
+          "type": "string",
+          "default": "Payment due within 30 days. Bank transfer details will be provided separately.",
+          "description": "Payment instructions for invoices"
+        },
+        "noteflo.invoiceNotes": {
+          "type": "string",
+          "default": "Thank you for your business!",
+          "description": "Additional notes for invoices"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/node": "16.x",
+    "@types/vscode": "^1.60.0",
+    "@typescript-eslint/eslint-plugin": "^5.45.0",
+    "@typescript-eslint/parser": "^5.45.0",
+    "eslint": "^8.28.0",
+    "typescript": "^4.9.4"
+  },
+  "dependencies": {
+    "jspdf": "^2.5.2"
+  }
+}

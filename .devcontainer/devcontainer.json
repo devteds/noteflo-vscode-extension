@@ -1,0 +1,41 @@
+{
+  "name": "NoteFlo Extension Development",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "typescript.preferences.includePackageJsonAutoImports": "on",
+        "typescript.updateImportsOnFileMove.enabled": "always"
+      },
+      "extensions": [
+        "ms-vscode.vscode-typescript-next",
+        "ms-vscode.vscode-json",
+        "ms-vscode.references-view",
+        "ms-vscode.vscode-eslint",
+        "foam.foam-vscode",
+        "ms-vscode.markdown-extension-pack",
+        "yzhang.markdown-all-in-one",
+        "ms-vscode.vscode-extension-author"
+      ]
+    }
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "20"
+    },
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+  "forwardPorts": [
+    3000,
+    8080
+  ],
+  // "postCreateCommand": "npm install",
+  "remoteUser": "node",
+  "mounts": [
+    "source=${localWorkspaceFolder}/.vscode,target=/workspace/.vscode,type=bind,consistency=cached"
+  ]
+}

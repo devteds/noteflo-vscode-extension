@@ -1,0 +1,43 @@
+# Development files
+.vscode/
+.devcontainer/
+.git/
+.gitignore
+
+# Documentation (keep only essential)
+DEVELOPMENT.md
+PROJECT_CONTEXT.md
+REPOSITORY_SETUP.md
+
+# TypeScript source files (compiled to out/)
+src/
+tsconfig.json
+
+# Node.js and dependencies
+node_modules/
+npm-debug.log*
+package-lock.json
+
+# Test files
+test/
+*.test.ts
+*.test.js
+
+# Compiled output maps (optional)
+out/**/*.map
+
+# VS Code extension packaging
+*.vsix
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+
+# Environment files
+.env
+.env.local
+.env.*.local 
