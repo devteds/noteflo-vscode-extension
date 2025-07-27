@@ -243,11 +243,29 @@ npx @vscode/vsce verify-pat
 
 ## 🔐 Security Notes
 
-- **Never commit PAT** to version control
-- **Use environment variables** for sensitive data
-- **Set PAT expiration** (max 1 year recommended)
+- **Never commit PAT** to version control (`.env` is in `.gitignore` ✅)
+- **Use `.env` file** for local development
+- **Set PAT expiration** (max 1 year recommended)  
 - **Rotate PAT periodically**
 - **Limit PAT scope** to only required permissions
+- **Don't share `.env` file** or commit it to git
+
+### Quick Setup Example
+```bash
+# 1. Create .env file (ensure it's git-ignored)
+cat > .env << 'EOF'
+# Personal Access Token for VS Code Marketplace
+VSCE_PAT=your-actual-token-from-azure-devops
+EOF
+
+# 2. Load and test
+source .env
+echo "PAT loaded: ${VSCE_PAT:0:8}..." # Shows first 8 chars
+
+# 3. Use with npm scripts
+npm run publish:dry-run  # Test first
+npm run publish          # Actually publish
+```
 
 ## 📞 Support
 

@@ -171,6 +171,54 @@
       ],
       "dependsOn": "🧹 Clean Build",
       "detail": "Clean and rebuild extension"
+    },
+    {
+      "label": "📦 Package VSIX",
+      "type": "npm",
+      "script": "package-vsix",
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": false
+      },
+      "problemMatcher": [],
+      "detail": "Create VSIX package for distribution"
+    },
+    {
+      "label": "🧪 Publish (Dry Run)",
+      "type": "npm",
+      "script": "publish:dry-run",
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": false
+      },
+      "problemMatcher": [],
+      "detail": "Test publishing process without actually publishing"
+    },
+    {
+      "label": "🚀 Publish to Marketplace",
+      "type": "npm",
+      "script": "publish",
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": false
+      },
+      "problemMatcher": [],
+      "detail": "Publish extension to VS Code Marketplace (requires .env with VSCE_PAT)"
     }
   ]
 }
