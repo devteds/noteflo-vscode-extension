@@ -36,7 +36,10 @@
     "Notebooks"
   ],
   "activationEvents": [
-    "onStartupFinished",
+    "onCommand:noteflo.configure",
+    "onCommand:noteflo.startTimeTracking",
+    "onCommand:noteflo.newMeetingNote",
+    "onCommand:noteflo.generateInvoice",
     "onView:noteFloSidebar"
   ],
   "main": "./dist/extension.js",

@@ -7,6 +7,10 @@
 [![Node.js](https://img.shields.io/badge/Node.js-20+-green.svg)](https://nodejs.org/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
+[![VS Code Marketplace](https://img.shields.io/visual-studio-marketplace/v/devteds.noteflo.svg?label=VS%20Code%20Marketplace&color=blue)](https://marketplace.visualstudio.com/items?itemName=devteds.noteflo)
+[![Marketplace Downloads](https://img.shields.io/visual-studio-marketplace/d/devteds.noteflo.svg?color=blue)](https://marketplace.visualstudio.com/items?itemName=devteds.noteflo)
+[![Marketplace Installs](https://img.shields.io/visual-studio-marketplace/i/devteds.noteflo.svg?color=blue)](https://marketplace.visualstudio.com/items?itemName=devteds.noteflo)
+
 *Built by [Chandra Shettigar](https://github.com/shettigarc)*
 
 ## 🎯 Overview
@@ -52,9 +56,28 @@ Perfect for developers, consultants, and freelancers who want to:
 
 ## 🚀 Installation
 
-### From VSIX Package
+### From VS Code Marketplace (Recommended)
+1. **Open VS Code**
+2. **Go to Extensions** (`Ctrl+Shift+X` / `Cmd+Shift+X`)
+3. **Search for "NoteFlo"** by Devteds
+4. **Click Install**
+5. **Open a workspace folder** (required for NoteFlo functionality)
+
+**Or install via Command Palette:**
+1. Open Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`)
+2. Type: `ext install devteds.noteflo`
+3. Press Enter
+
+**Or install via terminal:**
+```bash
+code --install-extension devteds.noteflo
+```
+
+[**→ Install from VS Code Marketplace**](https://marketplace.visualstudio.com/items?itemName=devteds.noteflo)
+
+### From VSIX Package (Development)
 1. Download the latest `noteflo-1.0.0.vsix` file
-2. Open VS Code
+2. Open VS Code  
 3. Run: `code --install-extension noteflo-1.0.0.vsix`
 4. Reload VS Code window
 5. Open a workspace folder (required for NoteFlo functionality)

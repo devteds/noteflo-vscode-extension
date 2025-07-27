@@ -1,7 +1,7 @@
-import * as vscode from 'vscode';
 import * as fs from 'fs';
-import * as path from 'path';
 import { jsPDF } from 'jspdf';
+import * as path from 'path';
+import * as vscode from 'vscode';
 
 interface TimeEntry {
   start_time: string;
@@ -105,7 +105,7 @@ export class InvoiceGenerator {
     this.workspaceRoot = workspaceRoot;
     this.timeTrackingDir = path.join(workspaceRoot, 'docs', 'time-tracking');
     this.invoicesDir = path.join(workspaceRoot, 'docs', 'client-invoices');
-    this.ensureDirectories();
+    // Don't create directories automatically - only when actually needed
   }
 
   private ensureDirectories(): void {
@@ -301,6 +301,9 @@ ${invoiceNotes}
 `;
 
     const markdownPath = path.join(this.invoicesDir, `${invoiceData.invoiceNumber}.md`);
+
+    // Ensure directories exist only when actually needed
+    this.ensureDirectories();
     fs.writeFileSync(markdownPath, content);
   }
 
@@ -610,6 +613,13 @@ ${invoiceNotes}
 
   private createConfigTemplate(): void {
     const templatePath = path.join(this.workspaceRoot, '.noteflo', 'config.template.json');
+
+    // Ensure .noteflo directory exists
+    const configDir = path.dirname(templatePath);
+    if (!fs.existsSync(configDir)) {
+      fs.mkdirSync(configDir, { recursive: true });
+    }
+
     const template = {
       "// Copy this to config.json and fill in your details": "",
       "business": {

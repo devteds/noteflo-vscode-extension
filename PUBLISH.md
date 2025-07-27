@@ -87,9 +87,11 @@ Content: [verification-code]
 ### 1. Pre-Publishing Checklist
 - [ ] All tests pass
 - [ ] Documentation updated
-- [ ] Version bumped in `package.json`
+- [ ] Version bumped in `package.json` (for updates)
 - [ ] `CHANGELOG.md` updated
 - [ ] Domain verification completed
+- [ ] Extension icon added (`assets/noteflo-icon.png`) - if updating
+- [ ] README.md includes marketplace links and badges
 
 ### 2. Build and Package
 ```bash
@@ -152,6 +154,25 @@ npx @vscode/vsce publish patch  # 1.0.0 → 1.0.1
 npx @vscode/vsce publish minor  # 1.0.0 → 1.1.0
 npx @vscode/vsce publish major  # 1.0.0 → 2.0.0
 ```
+
+### 5. Republishing Updates
+
+**For Extension Updates (icon, description, etc.):**
+```bash
+# Option 1: Patch version bump
+npm run publish patch  # 1.0.0 → 1.0.1
+
+# Option 2: Same version (if no code changes)
+npm run publish
+```
+
+**What gets updated:**
+- Extension icon
+- README content (shows in marketplace)
+- Package.json metadata
+- Any code changes
+
+**Note:** Marketplace updates may take 5-10 minutes to appear.
 
 ## 🔧 Alternative Publishing Methods
 
@@ -227,6 +248,8 @@ npx @vscode/vsce verify-pat
 - [ ] Extension appears in [marketplace](https://marketplace.visualstudio.com/items?itemName=devteds.noteflo)
 - [ ] Installation works: `ext install devteds.noteflo`
 - [ ] All features functional in installed version
+- [ ] Custom icon displays correctly (not default VS Code icon)
+- [ ] Marketplace badges show current version and stats
 
 ### 2. Marketing & Documentation
 - [ ] Update README badges with marketplace info

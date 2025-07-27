@@ -1,6 +1,6 @@
-import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as vscode from 'vscode';
 import { formatDateInTimezone, getConfiguredTimezone } from './invoiceGenerator';
 
 interface TimeEntry {
@@ -24,7 +24,7 @@ export class TimeTracker {
   constructor(workspaceRoot: string) {
     this.workspaceRoot = workspaceRoot;
     this.timeTrackingDir = path.join(workspaceRoot, 'docs', 'time-tracking');
-    this.ensureDirectories();
+    // Don't create directories automatically - only when actually needed
 
     this.statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
     this.statusBarItem.command = 'noteflo.timeStatus';
@@ -71,6 +71,8 @@ export class TimeTracker {
       description: description,
     };
 
+    // Ensure directories exist only when actually needed
+    this.ensureDirectories();
     fs.writeFileSync(this.getActiveSessionPath(), JSON.stringify(session, null, 2));
     this.updateStatusBar();
 
@@ -115,6 +117,9 @@ export class TimeTracker {
   }
 
   private saveTimeEntry(entry: TimeEntry, date?: Date): void {
+    // Ensure directories exist only when actually needed
+    this.ensureDirectories();
+
     const filePath = this.getMonthlyFilePath(date);
     let entries: TimeEntry[] = [];
 
