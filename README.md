@@ -15,7 +15,7 @@
 
 ## 🎯 Overview
 
-NoteFlo is a comprehensive VS Code extension designed for consultants, freelancers, and professionals who need to seamlessly manage their workflow within their development environment. It combines time tracking, note-taking, todo management, and professional invoicing into a unified, efficient system.
+NoteFlo is a VS Code extension designed for developers, tech consultants, freelancers, and tech professionals who need to seamlessly manage their workflow within their development environment. It combines time tracking, note-taking, todo management, and professional invoicing into a unified, efficient system.
 
 Perfect for developers, consultants, and freelancers who want to:
 
@@ -117,7 +117,7 @@ code --install-extension devteds.noteflo
 NoteFlo uses two separate configuration systems:
 
 
-**1. Note Organization (`.noteflo/note-config.json`)** - For directories (optional)
+**1. Note Organization (`.noteflo/config.json`)** - For directories (optional)
 ```json
 {
   "directories": {
@@ -174,46 +174,34 @@ NoteFlo uses two separate configuration systems:
 ## 📖 Quick Start Guide
 
 ### ⏱️ **Time Tracking**
-```
-Cmd+K S  - Start time tracking
-Cmd+K E  - Stop time tracking
-Cmd+K H  - Enter manual time entry
-```
 
-1. **Start Tracking**: Use `Cmd+K S` or "NoteFlo: Start Time Tracking"
+1. **Start Tracking**: Open Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`) → `NoteFlo: Start Time Tracking`
 2. **Enter Description**: Describe what you're working on
 3. **Check Status**: Status bar shows active timer and elapsed time
-4. **Stop Tracking**: Use `Cmd+K E` or "NoteFlo: Stop Time Tracking"
+4. **Stop Tracking**: Command Palette → `NoteFlo: Stop Time Tracking`
+5. **Manual Entry**: Command Palette → `NoteFlo: Enter Time (Offline Work)` for manual time entries
 
 ### 📝 **Note Creation**
-```
-Cmd+K M  - New meeting note
-Cmd+K D  - Create daily journal
-Cmd+K N  - Create new note  
-Cmd+K T  - Quick todo
-Cmd+K U  - Update notes index
-Cmd+K R  - Refresh dashboard
-```
 
 **Meeting Notes:**
-1. Use `Cmd+K M` for structured meeting notes
+1. Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`) → `NoteFlo: New Meeting Note`
 2. Enter meeting type, description, and attendees
 3. Get rich templates with agenda, notes, decisions, and action items
 4. Automatic time tracking integration
 
 **Daily Journals:**
-1. Use `Cmd+K D` for daily reflection and planning
+1. Command Palette → `NoteFlo: Create Daily Journal`
 2. Automatic date-based naming
 3. Structured templates with focus areas, accomplishments, and reflections
 4. Opens existing journal if already created for the day
 
 **General Notes:**
-1. Use `Cmd+K N` for any type of note
+1. Command Palette → `NoteFlo: Create New Note`
 2. Choose from categories: Development, Research, Ideas, Documentation, etc.
 3. Rich metadata and linking support
 
 **Priority-Based Todos:**
-1. Use `Cmd+K T` for quick todo creation
+1. Command Palette → `NoteFlo: Quick Todo`
 2. **Categories**: 
    - **General**: Personal tasks and reminders → `general-todos.md`
    - **Project**: Current workspace tasks → `project-todos.md`
@@ -225,14 +213,11 @@ Cmd+K R  - Refresh dashboard
 4. Automatic organization by priority within each file
 
 ### 💰 **Invoice Generation**
-```
-Cmd+K I  - Generate invoice
-Cmd+K V  - View invoices
-```
 
-1. **Generate Invoice**: Use `Cmd+K I` and select date range
+1. **Generate Invoice**: Command Palette → `NoteFlo: Generate Invoice` and select date range
 2. **Choose Format**: Markdown and/or PDF generation
 3. **Professional Output**: Sequential numbering and comprehensive details
+4. **View History**: Command Palette → `NoteFlo: View Invoices` to browse past invoices
 
 ## 🗂️ **File Organization**
 
@@ -241,7 +226,7 @@ NoteFlo creates a clean, Git-friendly file structure:
 ```
 your-project/
 ├── .noteflo/
-│   ├── config.json              # Your configuration (git-ignored)
+│   ├── config.json              # Your configuration (git-tracked)
 │   └── config.template.json     # Template file (git-tracked)
 └── docs/
     ├── time-tracking/
@@ -262,22 +247,35 @@ your-project/
     └── dashboard/                   # Dashboard components (auto-generated)
 ```
 
-## ⌨️ **Keyboard Shortcuts**
+## 🎮 **Command Palette Reference**
 
-| Shortcut  | Command              | Description                        |
-| --------- | -------------------- | ---------------------------------- |
-| `Cmd+K M` | New Meeting Note     | Create structured meeting note     |
-| `Cmd+K D` | Create Daily Journal | Create or open today's journal     |
-| `Cmd+K N` | Create New Note      | Create categorized general note    |
-| `Cmd+K T` | Quick Todo           | Add prioritized todo item          |
-| `Cmd+K S` | Start Time Tracking  | Begin tracking with description    |
-| `Cmd+K E` | Stop Time Tracking   | End current tracking session       |
-| `Cmd+K H` | Enter Time           | Manual time entry for offline work |
-| `Cmd+K I` | Generate Invoice     | Create professional invoice        |
-| `Cmd+K V` | View Invoices        | Browse invoice history             |
-| `Cmd+K C` | Configure NoteFlo    | Access setup wizard                |
-| `Cmd+K U` | Update Notes Index   | Refresh notes organization         |
-| `Cmd+K R` | Refresh Dashboard    | Update dynamic dashboard           |
+Access all NoteFlo features through the Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`):
+
+### **📝 Note Management**
+- `NoteFlo: New Meeting Note` - Create structured meeting note with templates
+- `NoteFlo: Create Daily Journal` - Create or open today's journal entry
+- `NoteFlo: Create New Note` - Create categorized general note
+- `NoteFlo: Quick Todo` - Add priority-based todo (General/Project categories)
+- `NoteFlo: Update Notes Index` - Refresh notes organization
+- `NoteFlo: Open Dashboard` - Access dynamic dashboard
+- `NoteFlo: Refresh Dashboard` - Update dashboard analytics
+
+### **⏱️ Time Tracking**
+- `NoteFlo: Start Time Tracking` - Begin tracking with description
+- `NoteFlo: Stop Time Tracking` - End current session
+- `NoteFlo: Time Status` - Show current tracking status
+- `NoteFlo: Enter Time (Offline Work)` - Manual time entry for offline work
+
+### **💰 Invoicing**
+- `NoteFlo: Generate Invoice` - Create professional invoices
+- `NoteFlo: View Invoices` - Browse invoice history
+
+### **⚙️ Configuration**
+- `NoteFlo: Configure NoteFlo` - Interactive setup wizard (for invoicing)
+- `NoteFlo: Edit Configuration` - Open config file for editing (if exists)
+- `NoteFlo: Test Configuration` - Validate current configuration
+
+**💡 Pro Tip**: Type "NoteFlo" in the Command Palette to see all available commands!
 
 ## 📋 **Todo Management System**
 
@@ -373,7 +371,7 @@ NoteFlo has **two optional configuration systems** depending on your needs:
 
 **When you need it**: Custom file organization, team consistency
 **Setup**: Manual creation or future config command
-**File**: `.noteflo/note-config.json` (optional)
+**File**: `.noteflo/config.json` (optional)
 
 ```json
 {
@@ -491,31 +489,32 @@ The NoteFlo dashboard provides a real-time overview of your workspace activity:
 - **Operating System**: Windows, macOS, Linux
 - **Workspace**: Requires an open folder/workspace for functionality
 
-## 📋 **Command Reference**
+## 📋 **Feature Overview**
 
-### **Configuration**
-- `NoteFlo: Configure NoteFlo` - Interactive setup wizard
-- `NoteFlo: Edit Configuration` - Open config file for editing
-- `NoteFlo: Test Configuration` - Validate current configuration
+### **📝 Core Features**
+- **Meeting Notes**: Structured templates with attendee tracking and time integration
+- **Daily Journals**: Reflection and planning with focus areas and accomplishments  
+- **General Notes**: Categorized notes with rich metadata and linking
+- **Priority Todos**: Visual priority system (🔴🟠🟡🟢) with General/Project categories
+- **Dynamic Dashboard**: Real-time analytics and quick access to recent activity
 
-### **Time Tracking**
-- `NoteFlo: Start Time Tracking` - Begin tracking with description
-- `NoteFlo: Stop Time Tracking` - End current session
-- `NoteFlo: Time Status` - Show current tracking status
-- `NoteFlo: Enter Time` - Manual time entry for offline work
+### **⏱️ Time Management**
+- **Smart Tracking**: One-click start/stop with description prompts
+- **Manual Entries**: Offline work, meetings, and travel time logging
+- **Status Integration**: Real-time timer in VS Code status bar
+- **Monthly Organization**: Automatic file rotation for organized storage
 
-### **Note Management**
-- `NoteFlo: New Meeting Note` - Create structured meeting note with templates
-- `NoteFlo: Create Daily Journal` - Create or open today's journal entry
-- `NoteFlo: Create New Note` - Create categorized general note
-- `NoteFlo: Quick Todo` - Add priority-based todo (General/Project categories)
-- `NoteFlo: Open Dashboard` - Access dynamic dashboard
-- `NoteFlo: Update Notes Index` - Refresh notes organization
-- `NoteFlo: Refresh Dashboard` - Update dashboard analytics
+### **💰 Professional Invoicing** (Optional - requires configuration)
+- **Dual Format**: Generate both Markdown and PDF invoices
+- **Professional Layout**: Sequential numbering and comprehensive billing details
+- **Business Branding**: Include your business info, logo, and custom payment terms
+- **Time Integration**: Automatic calculation from tracked hours
 
-### **Invoicing**
-- `NoteFlo: Generate Invoice` - Create professional invoices
-- `NoteFlo: View Invoices` - Browse invoice history
+### **🔧 Workspace Integration**
+- **Command Palette**: Access all features through VS Code's command system
+- **Sidebar Panel**: Quick overview and actions in the Explorer
+- **File Organization**: Git-friendly structure with sensible defaults
+- **Cross-Platform**: Consistent behavior on Windows, macOS, and Linux
 
 ## 🔧 **Troubleshooting**
 
