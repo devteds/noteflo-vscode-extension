@@ -18,7 +18,10 @@
         "foam.foam-vscode",
         "ms-vscode.markdown-extension-pack",
         "yzhang.markdown-all-in-one",
-        "ms-vscode.vscode-extension-author"
+        "ms-vscode.vscode-extension-author",
+        "ms-vscode.vscode-extension-author",
+        "GitHub.copilot",
+        "GitHub.copilot-chat"
       ]
     }
   },

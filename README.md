@@ -18,10 +18,21 @@
 NoteFlo is a comprehensive VS Code extension designed for consultants, freelancers, and professionals who need to seamlessly manage their workflow within their development environment. It combines time tracking, note-taking, todo management, and professional invoicing into a unified, efficient system.
 
 Perfect for developers, consultants, and freelancers who want to:
-- ⏱️ Track time without leaving their code editor
-- 📝 Create structured meeting notes and todos
-- 💰 Generate professional invoices from tracked time
-- 🎯 Maintain organized project documentation
+
+
+## 🖼️ Screenshots
+
+<div align="center" style="display: flex; flex-wrap: wrap; gap: 12px; justify-content: center;">
+  <img src="assets/screenshots/command-pallete.png" alt="Command Palette" width="320" style="margin:8px; border-radius:8px; box-shadow:0 2px 8px #0002;" />
+  <img src="assets/screenshots/meeting-note.png" alt="Meeting Note" width="320" style="margin:8px; border-radius:8px; box-shadow:0 2px 8px #0002;" />
+  <img src="assets/screenshots/sidepanel.png" alt="Sidebar Panel" width="320" style="margin:8px; border-radius:8px; box-shadow:0 2px 8px #0002;" />
+  <img src="assets/screenshots/explorer.png" alt="Explorer Integration" width="320" style="margin:8px; border-radius:8px; box-shadow:0 2px 8px #0002;" />
+  <img src="assets/screenshots/notes-dash.png" alt="Notes Dashboard" width="320" style="margin:8px; border-radius:8px; box-shadow:0 2px 8px #0002;" />
+  <img src="assets/screenshots/todos.png" alt="Todo List" width="320" style="margin:8px; border-radius:8px; box-shadow:0 2px 8px #0002;" />
+</div>
+
+<p align="center"><i>NoteFlo in action: command palette, meeting notes, sidebar, explorer, notes dashboard, and todos.</i></p>
+
 
 ## 🌟 Key Features
 
