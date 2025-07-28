@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { DashboardManager } from './dashboardManager';
 import { InvoiceGenerator } from './invoiceGenerator';
 import { NoteCreator } from './noteCreator';
 import { SidebarProvider } from './providers/sidebarProvider';
@@ -167,6 +168,37 @@ export function activate(context: vscode.ExtensionContext) {
         const creator = new NoteCreator(workspace);
         await creator.updateNotesIndex();
       }
+    }),
+
+    // Dashboard management commands
+    vscode.commands.registerCommand('noteflo.generateDashboard', async () => {
+      const workspace = requireWorkspace('Generate Dashboard');
+      if (workspace) {
+        const dashboardManager = new DashboardManager(workspace);
+        await dashboardManager.generateDynamicDashboard();
+      }
+    }),
+
+    vscode.commands.registerCommand('noteflo.refreshDashboard', async () => {
+      const workspace = requireWorkspace('Refresh Dashboard');
+      if (workspace) {
+        const dashboardManager = new DashboardManager(workspace);
+        await dashboardManager.forceUpdate();
+      }
+    }),
+
+    vscode.commands.registerCommand('noteflo.editConfig', async () => {
+      const workspace = requireWorkspace('Edit Configuration');
+      if (workspace) {
+        const { ConfigManager } = await import('./configManager');
+        const configManager = ConfigManager.getInstance();
+        await configManager.showConfigEditor();
+      }
+    }),
+
+    vscode.commands.registerCommand('noteflo.testConfig', async () => {
+      const { testConfigManager } = await import('./testConfig');
+      await testConfigManager();
     })
   );
 

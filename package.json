@@ -106,6 +106,26 @@
         "category": "NoteFlo"
       },
       {
+        "command": "noteflo.generateDashboard",
+        "title": "Generate Dashboard",
+        "category": "NoteFlo"
+      },
+      {
+        "command": "noteflo.refreshDashboard",
+        "title": "Refresh Dashboard",
+        "category": "NoteFlo"
+      },
+      {
+        "command": "noteflo.editConfig",
+        "title": "Edit Configuration",
+        "category": "NoteFlo"
+      },
+      {
+        "command": "noteflo.testConfig",
+        "title": "Test Configuration",
+        "category": "NoteFlo"
+      },
+      {
         "command": "noteflo.viewInvoices",
         "title": "View Invoices",
         "category": "NoteFlo"
@@ -156,6 +176,11 @@
         "command": "noteflo.updateNotesIndex",
         "key": "cmd+k u",
         "mac": "cmd+k u"
+      },
+      {
+        "command": "noteflo.refreshDashboard",
+        "key": "cmd+k r",
+        "mac": "cmd+k r"
       },
       {
         "command": "noteflo.generateInvoice",

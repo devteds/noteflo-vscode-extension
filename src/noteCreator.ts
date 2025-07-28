@@ -1,30 +1,61 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
+import { ConfigManager } from './configManager';
+import { DashboardManager } from './dashboardManager';
 import { formatDateInTimezone, getConfiguredTimezone } from './invoiceGenerator';
 
 export class NoteCreator {
   private workspaceRoot: string;
-  private docsDir: string;
-  private meetingNotesDir: string;
-  private dailyNotesDir: string;
-  private notesDir: string;
+  private dashboardManager: DashboardManager;
+  private configManager: ConfigManager;
 
   constructor(workspaceRoot: string) {
     this.workspaceRoot = workspaceRoot;
-    this.docsDir = path.join(workspaceRoot, 'docs');
-    this.meetingNotesDir = path.join(this.docsDir, 'meeting-notes');
-    this.dailyNotesDir = path.join(this.docsDir, 'daily-notes');
-    this.notesDir = path.join(this.docsDir, 'notes');
-    // Don't create directories automatically - only when actually needed
+    this.dashboardManager = new DashboardManager(workspaceRoot);
+    this.configManager = ConfigManager.getInstance();
   }
 
-  private ensureDirectories(): void {
-    [this.docsDir, this.meetingNotesDir, this.dailyNotesDir, this.notesDir].forEach(dir => {
-      if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
-      }
-    });
+  private async ensureDirectories(): Promise<void> {
+    try {
+      const config = {
+        meetingNotesDir: await this.configManager.getMeetingNotesDir(),
+        dailyNotesDir: await this.configManager.getDailyNotesDir(),
+        generalNotesDir: await this.configManager.getGeneralNotesDir(),
+        dashboardDir: await this.configManager.getDashboardDir(),
+        dashboardPath: await this.configManager.getDashboardPath()
+      };
+
+      const dirs = [
+        path.join(this.workspaceRoot, config.meetingNotesDir),
+        path.join(this.workspaceRoot, config.dailyNotesDir),
+        path.join(this.workspaceRoot, config.generalNotesDir),
+        path.join(this.workspaceRoot, config.dashboardDir),
+        path.dirname(path.join(this.workspaceRoot, config.dashboardPath))
+      ];
+
+      dirs.forEach(dir => {
+        if (!fs.existsSync(dir)) {
+          fs.mkdirSync(dir, { recursive: true });
+        }
+      });
+    } catch (error) {
+      console.error('Error ensuring directories:', error);
+      // Fallback to sync defaults
+      const dirs = [
+        path.join(this.workspaceRoot, this.configManager.getMeetingNotesDirSync()),
+        path.join(this.workspaceRoot, this.configManager.getDailyNotesDirSync()),
+        path.join(this.workspaceRoot, this.configManager.getGeneralNotesDirSync()),
+        path.join(this.workspaceRoot, this.configManager.getDashboardDirSync()),
+        path.dirname(path.join(this.workspaceRoot, this.configManager.getDashboardPathSync()))
+      ];
+
+      dirs.forEach(dir => {
+        if (!fs.existsSync(dir)) {
+          fs.mkdirSync(dir, { recursive: true });
+        }
+      });
+    }
   }
 
   private getTimestamp(): string {
@@ -41,37 +72,50 @@ export class NoteCreator {
   }
 
   async createMeetingNote(): Promise<void> {
-    // Get meeting details from user
-    const meetingType = await vscode.window.showInputBox({
-      prompt: 'Meeting type',
-      value: 'Review'
-    });
-    if (!meetingType) return;
+    try {
+      await this.ensureDirectories();
 
-    const description = await vscode.window.showInputBox({
-      prompt: 'Brief description',
-      value: 'Client discussion'
-    });
-    if (!description) return;
+      // Get meeting details from user
+      const meetingType = await vscode.window.showInputBox({
+        prompt: 'Meeting type',
+        value: 'Review'
+      });
+      if (!meetingType) return;
 
-    const attendees = await vscode.window.showInputBox({
-      prompt: 'Attendees (names only)',
-      value: 'Client team'
-    });
-    if (!attendees) return;
+      const description = await vscode.window.showInputBox({
+        prompt: 'Brief description',
+        value: 'Client discussion'
+      });
+      if (!description) return;
 
-    // Create filename in new format: topic-YYYY-MM-DD.md
-    const timestamp = this.getTimestamp();
-    const safeDesc = this.sanitizeFilename(description);
-    const filename = `${safeDesc}-${timestamp}.md`;
-    const filepath = path.join(this.meetingNotesDir, filename);
+      const attendees = await vscode.window.showInputBox({
+        prompt: 'Attendees (names only)',
+        value: 'Client team'
+      });
+      if (!attendees) return;
 
-    // Get configured timezone
-    const timezone = getConfiguredTimezone(this.workspaceRoot);
-    const startTime = formatDateInTimezone(new Date(), timezone, 'date-time');
+      // Create filename in new format: topic-YYYY-MM-DD.md
+      const timestamp = this.getTimestamp();
+      const safeDesc = this.sanitizeFilename(description);
+      const filename = `${safeDesc}-${timestamp}.md`;
 
-    // Create meeting note content
-    const content = `# ${meetingType}: ${description}
+      // Get meeting notes directory with robust error handling
+      let meetingNotesDir: string;
+      try {
+        meetingNotesDir = path.join(this.workspaceRoot, await this.configManager.getMeetingNotesDir());
+      } catch (error) {
+        console.warn('Failed to get meeting notes dir from config, using default:', error);
+        meetingNotesDir = path.join(this.workspaceRoot, this.configManager.getMeetingNotesDirSync());
+      }
+
+      const filepath = path.join(meetingNotesDir, filename);
+
+      // Get configured timezone
+      const timezone = getConfiguredTimezone(this.workspaceRoot);
+      const startTime = formatDateInTimezone(new Date(), timezone, 'date-time');
+
+      // Create meeting note content
+      const content = `# ${meetingType}: ${description}
 
 ## 📋 Meeting Details
 - **Date/Time:** ${startTime} (${timezone})
@@ -101,573 +145,455 @@ export class NoteCreator {
 *Meeting notes for ${description} - ${timestamp}*
 `;
 
-    // Ensure directories exist only when actually needed
-    this.ensureDirectories();
+      // Write file
+      fs.writeFileSync(filepath, content);
 
-    // Write file
-    fs.writeFileSync(filepath, content);
+      // Open file in VS Code
+      const doc = await vscode.workspace.openTextDocument(filepath);
+      await vscode.window.showTextDocument(doc);
 
-    // Open file in VS Code
-    const doc = await vscode.workspace.openTextDocument(filepath);
-    await vscode.window.showTextDocument(doc);
+      // Auto-update dashboard
+      try {
+        await this.dashboardManager.forceUpdate();
+      } catch (error) {
+        console.warn('Failed to update dashboard:', error);
+      }
 
-    // Update notes index
-    await this.updateNotesIndex();
+      vscode.window.showInformationMessage(`📝 Created meeting note: ${filename}`);
 
-    vscode.window.showInformationMessage(`📝 Created meeting note: ${filename}`);
+    } catch (error) {
+      console.error('Error creating meeting note:', error);
+      vscode.window.showErrorMessage(`Failed to create meeting note: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   }
 
   async createDailyJournal(): Promise<void> {
-    const timestamp = this.getTimestamp();
-    const filename = `${timestamp}.md`;
-    const filepath = path.join(this.dailyNotesDir, filename);
+    try {
+      await this.ensureDirectories();
 
-    // Check if daily journal already exists for today
-    if (fs.existsSync(filepath)) {
-      const openExisting = await vscode.window.showWarningMessage(
-        `Daily journal for ${timestamp} already exists. Open existing?`,
-        'Open Existing', 'Create New'
-      );
+      const timestamp = this.getTimestamp();
+      const filename = `${timestamp}.md`;
 
-      if (openExisting === 'Open Existing') {
+      let dailyNotesDir: string;
+      try {
+        dailyNotesDir = path.join(this.workspaceRoot, await this.configManager.getDailyNotesDir());
+      } catch (error) {
+        console.warn('Failed to get daily notes dir from config, using default:', error);
+        dailyNotesDir = path.join(this.workspaceRoot, this.configManager.getDailyNotesDirSync());
+      }
+
+      const filepath = path.join(dailyNotesDir, filename);
+
+      // Check if file already exists
+      if (fs.existsSync(filepath)) {
+        // Open existing file
         const doc = await vscode.workspace.openTextDocument(filepath);
         await vscode.window.showTextDocument(doc);
+        vscode.window.showInformationMessage(`📅 Opened existing daily journal: ${filename}`);
         return;
       }
-    }
 
-    // Get configured timezone
-    const timezone = getConfiguredTimezone(this.workspaceRoot);
-    const startTime = formatDateInTimezone(new Date(), timezone, 'readable');
+      // Get configured timezone
+      const timezone = getConfiguredTimezone(this.workspaceRoot);
+      const currentTime = formatDateInTimezone(new Date(), timezone, 'readable');
 
-    // Create daily journal content
-    const content = `# Daily Journal - ${timestamp}
+      // Create daily journal content
+      const content = `# Daily Journal - ${currentTime}
 
-## 📅 ${startTime}
-
-## 🎯 Today's Plan
-*What do I want to accomplish today?*
-
-### Priority Tasks
+## 🎯 Today's Focus
 - [ ] 
 
-### Secondary Tasks  
-- [ ] 
-
-### Learning Goals
-- [ ] 
-
-## 💡 Notes & Thoughts
-*Ideas, insights, observations throughout the day*
-
-
-
-## ✅ Accomplishments
-*What did I complete today?*
-
+## ✨ Accomplishments
 - 
 
-## 🔄 Action Items for Tomorrow
+## 📝 Notes & Observations
+- 
+
+## 🔄 Tomorrow's Priorities
 - [ ] 
 
-## 📊 Day Review
-**Energy Level:** /10  
-**Productivity:** /10  
-**Mood:** 😊/😐/😔  
-
-**Key Learnings:**
-
-
-**What went well:**
-
-
-**What could be improved:**
-
+## 💭 Reflections
+- 
 
 ---
-*Daily journal for ${timestamp}*
+*Daily journal entry for ${timestamp}*
 `;
 
-    // Ensure directories exist only when actually needed
-    this.ensureDirectories();
+      // Write file
+      fs.writeFileSync(filepath, content);
 
-    // Write file
-    fs.writeFileSync(filepath, content);
+      // Open file in VS Code
+      const doc = await vscode.workspace.openTextDocument(filepath);
+      await vscode.window.showTextDocument(doc);
 
-    // Open file in VS Code
-    const doc = await vscode.workspace.openTextDocument(filepath);
-    await vscode.window.showTextDocument(doc);
+      // Auto-update dashboard
+      try {
+        await this.dashboardManager.forceUpdate();
+      } catch (error) {
+        console.warn('Failed to update dashboard:', error);
+      }
 
-    // Update notes index
-    await this.updateNotesIndex();
+      vscode.window.showInformationMessage(`📅 Created daily journal: ${filename}`);
 
-    vscode.window.showInformationMessage(`📓 Created daily journal: ${timestamp}`);
+    } catch (error) {
+      console.error('Error creating daily journal:', error);
+      vscode.window.showErrorMessage(`Failed to create daily journal: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   }
 
   async createNewNote(): Promise<void> {
-    // Get note title from user
-    const noteTitle = await vscode.window.showInputBox({
-      prompt: 'Note title',
-      placeHolder: 'Enter a descriptive title for your note'
-    });
-    if (!noteTitle) return;
+    try {
+      await this.ensureDirectories();
 
-    // Get optional tags/category
-    const category = await vscode.window.showQuickPick([
-      'Development',
-      'Research',
-      'Ideas',
-      'Documentation',
-      'Learning',
-      'Reference',
-      'Other'
-    ], {
-      placeHolder: 'Select a category (optional)',
-      canPickMany: false
-    });
+      // Get note title from user
+      const noteTitle = await vscode.window.showInputBox({
+        prompt: 'Note title',
+        placeHolder: 'Enter a descriptive title for your note'
+      });
+      if (!noteTitle) return;
 
-    // Create filename: title-YYYY-MM-DD.md
-    const timestamp = this.getTimestamp();
-    const safeTitle = this.sanitizeFilename(noteTitle);
-    const filename = `${safeTitle}-${timestamp}.md`;
-    const filepath = path.join(this.notesDir, filename);
+      // Get optional tags/category
+      const category = await vscode.window.showQuickPick([
+        'Development',
+        'Research',
+        'Ideas',
+        'Documentation',
+        'Learning',
+        'Reference',
+        'Other'
+      ], {
+        placeHolder: 'Select a category (optional)',
+        canPickMany: false
+      });
 
-    // Get configured timezone
-    const timezone = getConfiguredTimezone(this.workspaceRoot);
-    const createdTime = formatDateInTimezone(new Date(), timezone, 'readable');
+      // Create filename: title-YYYY-MM-DD.md
+      const timestamp = this.getTimestamp();
+      const safeTitle = this.sanitizeFilename(noteTitle);
+      const filename = `${safeTitle}-${timestamp}.md`;
 
-    // Create note content
-    const categoryTag = category ? `\n**Category:** ${category}` : '';
-    const content = `# ${noteTitle}
+      let notesDir: string;
+      try {
+        notesDir = path.join(this.workspaceRoot, await this.configManager.getGeneralNotesDir());
+      } catch (error) {
+        console.warn('Failed to get general notes dir from config, using default:', error);
+        notesDir = path.join(this.workspaceRoot, this.configManager.getGeneralNotesDirSync());
+      }
+
+      const filepath = path.join(notesDir, filename);
+
+      // Get configured timezone
+      const timezone = getConfiguredTimezone(this.workspaceRoot);
+      const createdTime = formatDateInTimezone(new Date(), timezone, 'readable');
+
+      // Create note content
+      const categoryTag = category ? `\n**Category:** ${category}` : '';
+      const content = `# ${noteTitle}
 
 **Created:** ${createdTime}${categoryTag}
 
 ## Overview
-*Brief description of what this note covers*
-
 
 
 ## Details
 
 
-
-## Key Points
+## Resources
 - 
 
-
-
-## References
+## Related
 - 
-
-
-
-## Related Notes
-- 
-
-
 
 ---
-*Note: ${noteTitle} - ${timestamp}*
+*Note created on ${timestamp}*
 `;
 
-    // Ensure directories exist only when actually needed
-    this.ensureDirectories();
+      // Write file
+      fs.writeFileSync(filepath, content);
 
-    // Write file
-    fs.writeFileSync(filepath, content);
+      // Open file in VS Code
+      const doc = await vscode.workspace.openTextDocument(filepath);
+      await vscode.window.showTextDocument(doc);
 
-    // Open file in VS Code
-    const doc = await vscode.workspace.openTextDocument(filepath);
-    await vscode.window.showTextDocument(doc);
+      // Auto-update dashboard
+      try {
+        await this.dashboardManager.forceUpdate();
+      } catch (error) {
+        console.warn('Failed to update dashboard:', error);
+      }
 
-    // Update notes index
-    await this.updateNotesIndex();
+      vscode.window.showInformationMessage(`📝 Created note: ${filename}`);
 
-    vscode.window.showInformationMessage(`📝 Created note: ${noteTitle}`);
+    } catch (error) {
+      console.error('Error creating note:', error);
+      vscode.window.showErrorMessage(`Failed to create note: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   }
 
   async createQuickTodo(): Promise<void> {
-    const todoDescription = await vscode.window.showInputBox({
-      prompt: 'Todo description',
-      placeHolder: 'What needs to be done?'
-    });
-    if (!todoDescription) return;
+    try {
+      const todoText = await vscode.window.showInputBox({
+        prompt: 'Enter your todo task',
+        placeHolder: 'What needs to be done?'
+      });
+      if (!todoText) return;
 
-    const priority = await vscode.window.showQuickPick([
-      'Urgent',
-      'High',
-      'Normal',
-      'Low'
-    ], {
-      placeHolder: 'Select priority'
-    });
-    if (!priority) return;
+      // Get category selection
+      const category = await vscode.window.showQuickPick([
+        { label: 'General', description: 'General tasks and reminders' },
+        { label: 'Project', description: 'Tasks related to this workspace/project' }
+      ], {
+        placeHolder: 'Select todo category',
+        canPickMany: false
+      });
+      if (!category) return;
 
-    const isProjectSpecific = await vscode.window.showQuickPick([
-      'Project-specific',
-      'General'
-    ], {
-      placeHolder: 'Todo type'
-    });
+      // Get priority level
+      const priority = await vscode.window.showQuickPick([
+        { label: 'Urgent', description: '🔴 Needs immediate attention' },
+        { label: 'High', description: '🟠 Important and time-sensitive' },
+        { label: 'Normal', description: '🟡 Regular priority' },
+        { label: 'Low', description: '🟢 Can be done when time permits' }
+      ], {
+        placeHolder: 'Select priority level',
+        canPickMany: false
+      });
+      if (!priority) return;
 
-    // Determine todo file
-    const currentProject = this.getCurrentProject();
-    let todoFile: string;
+      let todoFile = '';
+      let displayName = '';
 
-    if (isProjectSpecific === 'Project-specific' && currentProject) {
-      todoFile = path.join(this.docsDir, 'project-planning', `${currentProject}-todos.md`);
-    } else {
-      todoFile = path.join(this.docsDir, 'project-planning', 'general-todos.md');
-    }
-
-    // Ensure todo file exists
-    this.ensureTodoFile(todoFile);
-
-    // Add todo to appropriate section
-    this.addTodoToFile(todoFile, todoDescription, priority);
-
-    // Auto-update notes index for project documentation
-    await this.updateNotesIndex();
-
-    vscode.window.showInformationMessage(`✅ Added ${priority.toLowerCase()} priority todo`);
-  }
-
-  private getCurrentProject(): string {
-    const config = vscode.workspace.getConfiguration('noteflo');
-    return config.get('currentProject', '');
-  }
-
-  private ensureTodoFile(filePath: string): void {
-    if (!fs.existsSync(filePath)) {
-      const dir = path.dirname(filePath);
-      if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
+      if (category.label === 'Project') {
+        // Use workspace folder name for project todos
+        const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+        const projectName = workspaceFolder ? path.basename(workspaceFolder.uri.fsPath) : 'project';
+        displayName = projectName;
+        todoFile = path.join(this.workspaceRoot, 'docs', 'project-planning', 'project-todos.md');
+      } else {
+        displayName = 'General';
+        todoFile = path.join(this.workspaceRoot, 'docs', 'project-planning', 'general-todos.md');
       }
 
-      const filename = path.basename(filePath, '.md');
-      const content = `# ${filename.replace('-', ' ').toUpperCase()}
+      // Ensure directory exists
+      const todoDir = path.dirname(todoFile);
+      if (!fs.existsSync(todoDir)) {
+        fs.mkdirSync(todoDir, { recursive: true });
+      }
 
-## 🚨 Urgent
-- 
+      const timezone = getConfiguredTimezone(this.workspaceRoot);
+      const timestamp = formatDateInTimezone(new Date(), timezone, 'readable');
 
-## 🔥 High Priority  
-- 
+      // Create priority-based todo entry with proper formatting
+      const priorityEmoji = priority.label === 'Urgent' ? '🔴' :
+        priority.label === 'High' ? '🟠' :
+          priority.label === 'Normal' ? '🟡' : '🟢';
 
-## 📋 Normal Priority
-- 
+      const todoEntry = `- [ ] **[${priority.label}]** ${priorityEmoji} ${todoText} *(Added: ${timestamp})*\n`;
 
-## 🕐 Low Priority
-- 
+      // Create or update todo file with proper section management
+      if (fs.existsSync(todoFile)) {
+        let content = fs.readFileSync(todoFile, 'utf8');
 
-## ✅ Completed
-- 
+        // Find the appropriate priority section or create it
+        const sectionName = `### ${priority.label} Priority`;
+
+        if (content.includes(sectionName)) {
+          // Add to existing priority section
+          content = content.replace(
+            new RegExp(`(${sectionName}\\n)`),
+            `$1${todoEntry}`
+          );
+        } else {
+          // Create new priority section in the right order
+          const sections = ['Urgent', 'High', 'Normal', 'Low'];
+          const priorityIndex = sections.indexOf(priority.label);
+
+          // Find where to insert the new section
+          let insertAfter = '## Active Tasks';
+          for (let i = 0; i < priorityIndex; i++) {
+            const checkSection = `### ${sections[i]} Priority`;
+            if (content.includes(checkSection)) {
+              insertAfter = checkSection;
+            }
+          }
+
+          if (content.includes(insertAfter)) {
+            // Insert after the found section
+            const insertPattern = new RegExp(`(${insertAfter}\\n(?:[^#]*?)(?=\\n### |\\n## |$))`, 's');
+            content = content.replace(insertPattern, `$1\n${sectionName}\n${todoEntry}`);
+          } else {
+            // Fallback: append at the end of active tasks
+            content += `\n${sectionName}\n${todoEntry}`;
+          }
+        }
+
+        fs.writeFileSync(todoFile, content);
+      } else {
+        // Create new todo file with structured sections
+        const title = category.label === 'Project' ? `# Project Todo List` : '# General Todo List';
+        const content = `${title}
+
+## Active Tasks
+
+### ${priority.label} Priority
+${todoEntry}
+
+## Completed Tasks
+
 
 ---
-*Last updated: ${formatDateInTimezone(new Date(), getConfiguredTimezone(this.workspaceRoot), 'date-only')}*
+*Todo list managed by NoteFlo*
+*Priority levels: 🔴 Urgent | 🟠 High | 🟡 Normal | 🟢 Low*
 `;
-      // Ensure directories exist only when actually needed
-      this.ensureDirectories();
-      fs.writeFileSync(filePath, content);
-    }
-  }
-
-  private addTodoToFile(filePath: string, todo: string, priority: string): void {
-    let content = fs.readFileSync(filePath, 'utf8');
-
-    const sectionMap: { [key: string]: string } = {
-      'Urgent': '## 🚨 Urgent',
-      'High': '## 🔥 High Priority',
-      'Normal': '## 📋 Normal Priority',
-      'Low': '## 🕐 Low Priority'
-    };
-
-    const sectionHeader = sectionMap[priority];
-    const todoItem = `- [ ] ${todo}`;
-
-    // Find section and add todo
-    const lines = content.split('\n');
-    const sectionIndex = lines.findIndex(line => line.trim() === sectionHeader);
-
-    if (sectionIndex !== -1) {
-      // Find next section or end of file
-      let insertIndex = sectionIndex + 1;
-      while (insertIndex < lines.length && !lines[insertIndex].startsWith('## ')) {
-        insertIndex++;
+        fs.writeFileSync(todoFile, content);
       }
 
-      // Insert before next section or at end
-      lines.splice(insertIndex, 0, todoItem);
-      content = lines.join('\n');
+      // Auto-update dashboard
+      try {
+        await this.dashboardManager.forceUpdate();
+      } catch (error) {
+        console.warn('Failed to update dashboard:', error);
+      }
 
-      // Ensure directories exist only when actually needed
-      this.ensureDirectories();
-      fs.writeFileSync(filePath, content);
+      // Show success message with category and priority info
+      vscode.window.showInformationMessage(
+        `✅ Added ${priority.label.toLowerCase()} priority todo to ${displayName}: "${todoText}"`
+      );
+
+    } catch (error) {
+      console.error('Error creating todo:', error);
+      vscode.window.showErrorMessage(`Failed to create todo: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
   async openDashboard(): Promise<void> {
-    const dashboardPath = path.join(this.docsDir, 'index.md');
+    try {
+      // Generate/update the dynamic dashboard
+      await this.dashboardManager.smartUpdate();
 
-    // Create dashboard if it doesn't exist
-    if (!fs.existsSync(dashboardPath)) {
-      await this.createDefaultDashboard(dashboardPath);
+      let dashboardPath: string;
+      try {
+        dashboardPath = path.join(this.workspaceRoot, await this.configManager.getDashboardPath());
+      } catch (error) {
+        console.warn('Failed to get dashboard path from config, using default:', error);
+        dashboardPath = path.join(this.workspaceRoot, this.configManager.getDashboardPathSync());
+      }
+
+      // Open the dashboard
+      const doc = await vscode.workspace.openTextDocument(dashboardPath);
+      await vscode.window.showTextDocument(doc);
+    } catch (error) {
+      console.error('Error opening dashboard:', error);
+      vscode.window.showErrorMessage(`Failed to open dashboard: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
-
-    const doc = await vscode.workspace.openTextDocument(dashboardPath);
-    await vscode.window.showTextDocument(doc);
-  }
-
-  private async createDefaultDashboard(dashboardPath: string): Promise<void> {
-    // Ensure directories exist
-    this.ensureDirectories();
-
-    const timezone = getConfiguredTimezone(this.workspaceRoot);
-    const timestamp = formatDateInTimezone(new Date(), timezone, 'readable');
-
-    const content = `# 📊 NoteFlo Dashboard
-
-*Welcome to your NoteFlo workspace dashboard!*
-
-## 🚀 Quick Start
-
-### First Time Setup
-- [ ] Run **NoteFlo: Configure NoteFlo** from Command Palette
-- [ ] Set up your business information, billing rates, and timezone
-
-### Daily Workflow
-- [ ] **Start time tracking**: \`Cmd+K S\` or **NoteFlo: Start Time Tracking**  
-- [ ] **Create daily journal**: \`Cmd+K D\` or **NoteFlo: Create Daily Journal**
-- [ ] **Create meeting notes**: \`Cmd+K M\` or **NoteFlo: New Meeting Note**
-- [ ] **Create new note**: \`Cmd+K N\` or **NoteFlo: Create New Note**
-- [ ] **Add quick todos**: \`Cmd+K T\` or **NoteFlo: Quick Todo**
-- [ ] **Stop tracking**: \`Cmd+K E\` or **NoteFlo: Stop Time Tracking**
-
-### Weekly Tasks
-- [ ] **Generate invoices**: \`Cmd+K I\` or **NoteFlo: Generate Invoice**
-- [ ] **Update notes index**: \`Cmd+K U\` or **NoteFlo: Update Notes Index**
-
-## 📁 Your Workspace Structure
-
-### 📝 Documentation  
-- **[Meeting Notes](meeting-notes/)** - Client calls, project discussions
-- **[Daily Notes](daily-notes/)** - Daily journals and planning
-- **[Notes](notes/)** - General notes and documentation
-- **[Notes Index](notes/)** - Auto-generated index of all notes
-
-### ⏰ Time Tracking
-- **[Time Entries](time-tracking/)** - Monthly time tracking files
-- **Current Session** - Active tracking status (see status bar)
-
-### 💰 Invoicing  
-- **[Client Invoices](client-invoices/)** - Generated invoices (Markdown + PDF)
-
-## 🎯 Current Focus
-
-### This Week
-- 
-
-### Important Deadlines
-- 
-
-### Key Projects
-- 
-
-## 📊 Quick Stats
-
-*Use **NoteFlo: Update Notes Index** to see statistics*
-
----
-
-## 🔗 Useful Commands
-
-| Command | Shortcut | Description |
-|---------|----------|-------------|
-| Configure NoteFlo | - | Setup business info and preferences |
-| Start Time Tracking | \`Cmd+K S\` | Begin tracking work time |
-| Stop Time Tracking | \`Cmd+K E\` | End current tracking session |
-| New Meeting Note | \`Cmd+K M\` | Create structured meeting notes |
-| Create Daily Journal | \`Cmd+K D\` | Create daily planning journal |
-| Create New Note | \`Cmd+K N\` | Create general note |
-| Quick Todo | \`Cmd+K T\` | Add prioritized todo items |
-| Generate Invoice | \`Cmd+K I\` | Create professional invoices |
-| Update Notes Index | \`Cmd+K U\` | Refresh notes organization |
-| Open Dashboard | - | Return to this dashboard |
-
----
-
-*Created: ${timestamp}*  
-*Dashboard auto-generated by NoteFlo Extension*
-`;
-
-    fs.writeFileSync(dashboardPath, content);
-    vscode.window.showInformationMessage('📊 Created NoteFlo dashboard at docs/index.md');
   }
 
   async updateNotesIndex(): Promise<void> {
-    // Run the notes index updater (equivalent to our Python script)
-    const notesIndexPath = path.join(this.docsDir, 'notes', 'index.md');
+    try {
+      await this.ensureDirectories();
 
-    if (!fs.existsSync(path.dirname(notesIndexPath))) {
-      fs.mkdirSync(path.dirname(notesIndexPath), { recursive: true });
-    }
+      let notesIndexPath: string;
+      try {
+        const generalNotesDir = await this.configManager.getGeneralNotesDir();
+        notesIndexPath = path.join(this.workspaceRoot, generalNotesDir, 'index.md');
+      } catch (error) {
+        console.warn('Failed to get notes dir from config, using default:', error);
+        notesIndexPath = path.join(this.workspaceRoot, this.configManager.getGeneralNotesDirSync(), 'index.md');
+      }
 
-    // Scan for all notes
-    const allNotes = await this.scanAllNotes();
+      const timezone = getConfiguredTimezone(this.workspaceRoot);
+      const timestamp = formatDateInTimezone(new Date(), timezone, 'readable');
 
-    // Generate index content
-    const timezone = getConfiguredTimezone(this.workspaceRoot);
-    const now = formatDateInTimezone(new Date(), timezone, 'readable');
-    let indexContent = `# Notes Index
+      let content = `# Notes Index
 
-*Last updated: ${now}*
+*Last updated: ${timestamp}*
 
-## 📝 Recent Notes (Last 10)
+## Recent Notes
 
 `;
 
-    // Show recent notes
-    const recentNotes = allNotes.slice(0, 10);
-    for (const note of recentNotes) {
-      let icon = '📝';
-      let folderPath = '';
+      // Scan and categorize notes
+      const notesByCategory = {
+        meeting: [] as string[],
+        daily: [] as string[],
+        general: [] as string[]
+      };
 
-      switch (note.type) {
-        case 'meeting':
-          icon = '🗣️';
-          folderPath = 'meeting-notes';
-          break;
-        case 'daily':
-          icon = '📓';
-          folderPath = 'daily-notes';
-          break;
-        case 'note':
-          icon = '📝';
-          folderPath = 'notes';
-          break;
+      // Scan meeting notes
+      try {
+        const meetingNotesDir = path.join(this.workspaceRoot, await this.configManager.getMeetingNotesDir());
+        if (fs.existsSync(meetingNotesDir)) {
+          const meetingFiles = fs.readdirSync(meetingNotesDir).filter(f => f.endsWith('.md'));
+          notesByCategory.meeting = meetingFiles.sort().reverse().slice(0, 10);
+        }
+      } catch (error) {
+        console.warn('Error scanning meeting notes:', error);
       }
 
-      indexContent += `- ${icon} [${note.title}](../${folderPath}/${note.filename}) - ${note.date}\n`;
-    }
+      // Scan daily notes
+      try {
+        const dailyNotesDir = path.join(this.workspaceRoot, await this.configManager.getDailyNotesDir());
+        if (fs.existsSync(dailyNotesDir)) {
+          const dailyFiles = fs.readdirSync(dailyNotesDir).filter(f => f.endsWith('.md'));
+          notesByCategory.daily = dailyFiles.sort().reverse().slice(0, 10);
+        }
+      } catch (error) {
+        console.warn('Error scanning daily notes:', error);
+      }
 
-    indexContent += `
-## 🔍 Navigation
-- [Meeting Notes](../meeting-notes/) (${allNotes.filter(n => n.type === 'meeting').length} files)
-- [Daily Notes](../daily-notes/) (${allNotes.filter(n => n.type === 'daily').length} files)
-- [Notes](../notes/) (${allNotes.filter(n => n.type === 'note').length} files)
+      // Scan general notes
+      try {
+        const generalNotesDir = path.join(this.workspaceRoot, await this.configManager.getGeneralNotesDir());
+        if (fs.existsSync(generalNotesDir)) {
+          const noteFiles = fs.readdirSync(generalNotesDir).filter(f => f.endsWith('.md') && f !== 'index.md');
+          notesByCategory.general = noteFiles.sort().reverse().slice(0, 10);
+        }
+      } catch (error) {
+        console.warn('Error scanning general notes:', error);
+      }
 
-## 📊 Statistics
-- Total Notes: ${allNotes.length}
-- This Month: ${allNotes.filter(n => this.isThisMonth(n.date)).length}
-- This Week: ${allNotes.filter(n => this.isThisWeek(n.date)).length}
+      // Add meeting notes section
+      if (notesByCategory.meeting.length > 0) {
+        content += `### 🗣️ Meeting Notes\n\n`;
+        notesByCategory.meeting.forEach(file => {
+          const title = file.replace('.md', '').replace(/-/g, ' ');
+          content += `- [${title}](../meeting-notes/${file})\n`;
+        });
+        content += '\n';
+      }
 
----
-*Auto-generated by NoteFlo Extension*
+      // Add daily journals section
+      if (notesByCategory.daily.length > 0) {
+        content += `### 📅 Daily Journals\n\n`;
+        notesByCategory.daily.forEach(file => {
+          const date = file.replace('.md', '');
+          content += `- [${date}](../daily-notes/${file})\n`;
+        });
+        content += '\n';
+      }
+
+      // Add general notes section
+      if (notesByCategory.general.length > 0) {
+        content += `### 📝 General Notes\n\n`;
+        notesByCategory.general.forEach(file => {
+          const title = file.replace('.md', '').replace(/-/g, ' ');
+          content += `- [${title}](${file})\n`;
+        });
+        content += '\n';
+      }
+
+      content += `---
+
+*This index is automatically generated by NoteFlo. Use "Update Notes Index" to refresh.*
 `;
 
-    // Ensure directories exist only when actually needed
-    this.ensureDirectories();
-    fs.writeFileSync(notesIndexPath, indexContent);
-    vscode.window.showInformationMessage(`📋 Updated notes index (${allNotes.length} notes found)`);
-  }
+      // Write the index file
+      fs.writeFileSync(notesIndexPath, content);
 
-  private async scanAllNotes(): Promise<Array<{ filename: string, title: string, date: string, type: 'meeting' | 'daily' | 'note' }>> {
-    const notes: Array<{ filename: string, title: string, date: string, type: 'meeting' | 'daily' | 'note' }> = [];
+      vscode.window.showInformationMessage('📚 Notes index updated successfully!');
 
-    // Scan meeting notes
-    if (fs.existsSync(this.meetingNotesDir)) {
-      const meetingFiles = fs.readdirSync(this.meetingNotesDir).filter(f => f.endsWith('.md'));
-      for (const filename of meetingFiles) {
-        const noteInfo = this.parseMeetingFilename(filename);
-        if (noteInfo) {
-          notes.push({
-            filename,
-            title: noteInfo.title,
-            date: noteInfo.date,
-            type: 'meeting'
-          });
-        }
-      }
+    } catch (error) {
+      console.error('Error updating notes index:', error);
+      vscode.window.showErrorMessage(`Failed to update notes index: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
-
-    // Scan daily notes
-    if (fs.existsSync(this.dailyNotesDir)) {
-      const dailyFiles = fs.readdirSync(this.dailyNotesDir).filter(f => f.endsWith('.md'));
-      for (const filename of dailyFiles) {
-        const noteInfo = this.parseDailyFilename(filename);
-        if (noteInfo) {
-          notes.push({
-            filename,
-            title: noteInfo.title,
-            date: noteInfo.date,
-            type: 'daily'
-          });
-        }
-      }
-    }
-
-    // Scan general notes
-    if (fs.existsSync(this.notesDir)) {
-      const noteFiles = fs.readdirSync(this.notesDir).filter(f => f.endsWith('.md') && f !== 'index.md');
-      for (const filename of noteFiles) {
-        const noteInfo = this.parseNoteFilename(filename);
-        if (noteInfo) {
-          notes.push({
-            filename,
-            title: noteInfo.title,
-            date: noteInfo.date,
-            type: 'note'
-          });
-        }
-      }
-    }
-
-    // Sort by date (newest first)
-    notes.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    return notes;
   }
-
-  private parseMeetingFilename(filename: string): { title: string, date: string } | null {
-    // Handle both formats: topic-YYYY-MM-DD.md and YYYY-MM-DD-topic.md
-    const match1 = filename.match(/^(.+)-(\d{4}-\d{2}-\d{2})\.md$/);
-    if (match1) {
-      return { title: match1[1].replace(/-/g, ' '), date: match1[2] };
-    }
-
-    const match2 = filename.match(/^(\d{4}-\d{2}-\d{2})-(.+)\.md$/);
-    if (match2) {
-      return { title: match2[2].replace(/-/g, ' '), date: match2[1] };
-    }
-
-    return null;
-  }
-
-  private parseDailyFilename(filename: string): { title: string, date: string } | null {
-    const match = filename.match(/^(\d{4}-\d{2}-\d{2})\.md$/);
-    if (match) {
-      return { title: `Daily Note`, date: match[1] };
-    }
-    return null;
-  }
-
-  private parseNoteFilename(filename: string): { title: string, date: string } | null {
-    // Handle format: title-YYYY-MM-DD.md
-    const match = filename.match(/^(.+)-(\d{4}-\d{2}-\d{2})\.md$/);
-    if (match) {
-      return { title: match[1].replace(/-/g, ' '), date: match[2] };
-    }
-    return null;
-  }
-
-  private isThisMonth(dateStr: string): boolean {
-    const date = new Date(dateStr);
-    const now = new Date();
-    return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
-  }
-
-  private isThisWeek(dateStr: string): boolean {
-    const date = new Date(dateStr);
-    const now = new Date();
-    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    return date >= weekAgo && date <= now;
-  }
-} 
+}

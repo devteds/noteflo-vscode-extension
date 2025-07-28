@@ -46,6 +46,9 @@ export class SidebarProvider implements vscode.TreeDataProvider<SidebarItem> {
         new SidebarItem('Create Daily Journal', vscode.TreeItemCollapsibleState.None, 'book', 'noteflo.createDailyJournal'),
         new SidebarItem('Create New Note', vscode.TreeItemCollapsibleState.None, 'note', 'noteflo.createNewNote'),
         new SidebarItem('Quick Todo', vscode.TreeItemCollapsibleState.None, 'checklist', 'noteflo.quickTodo'),
+        new SidebarItem('Open Dashboard', vscode.TreeItemCollapsibleState.None, 'dashboard', 'noteflo.openDashboard'),
+        new SidebarItem('Refresh Dashboard', vscode.TreeItemCollapsibleState.None, 'sync', 'noteflo.refreshDashboard'),
+        new SidebarItem('Edit Configuration', vscode.TreeItemCollapsibleState.None, 'gear', 'noteflo.editConfig'),
         new SidebarItem('Update Notes Index', vscode.TreeItemCollapsibleState.None, 'refresh', 'noteflo.updateNotesIndex')
       );
 
