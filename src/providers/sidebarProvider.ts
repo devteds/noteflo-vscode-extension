@@ -42,7 +42,9 @@ export class SidebarProvider implements vscode.TreeDataProvider<SidebarItem> {
         new SidebarItem('Start Tracking', vscode.TreeItemCollapsibleState.None, 'play', 'noteflo.startTimeTracking'),
         new SidebarItem('Stop Tracking', vscode.TreeItemCollapsibleState.None, 'stop', 'noteflo.stopTimeTracking'),
         new SidebarItem('Enter Time', vscode.TreeItemCollapsibleState.None, 'add', 'noteflo.enterTime'),
-        new SidebarItem('New Meeting Note', vscode.TreeItemCollapsibleState.None, 'note', 'noteflo.newMeetingNote'),
+        new SidebarItem('New Meeting Note', vscode.TreeItemCollapsibleState.None, 'comment-discussion', 'noteflo.newMeetingNote'),
+        new SidebarItem('Create Daily Journal', vscode.TreeItemCollapsibleState.None, 'book', 'noteflo.createDailyJournal'),
+        new SidebarItem('Create New Note', vscode.TreeItemCollapsibleState.None, 'note', 'noteflo.createNewNote'),
         new SidebarItem('Quick Todo', vscode.TreeItemCollapsibleState.None, 'checklist', 'noteflo.quickTodo'),
         new SidebarItem('Update Notes Index', vscode.TreeItemCollapsibleState.None, 'refresh', 'noteflo.updateNotesIndex')
       );

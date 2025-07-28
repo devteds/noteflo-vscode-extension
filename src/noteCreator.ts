@@ -8,17 +8,19 @@ export class NoteCreator {
   private docsDir: string;
   private meetingNotesDir: string;
   private dailyNotesDir: string;
+  private notesDir: string;
 
   constructor(workspaceRoot: string) {
     this.workspaceRoot = workspaceRoot;
     this.docsDir = path.join(workspaceRoot, 'docs');
     this.meetingNotesDir = path.join(this.docsDir, 'meeting-notes');
     this.dailyNotesDir = path.join(this.docsDir, 'daily-notes');
+    this.notesDir = path.join(this.docsDir, 'notes');
     // Don't create directories automatically - only when actually needed
   }
 
   private ensureDirectories(): void {
-    [this.docsDir, this.meetingNotesDir, this.dailyNotesDir].forEach(dir => {
+    [this.docsDir, this.meetingNotesDir, this.dailyNotesDir, this.notesDir].forEach(dir => {
       if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true });
       }
@@ -113,6 +115,175 @@ export class NoteCreator {
     await this.updateNotesIndex();
 
     vscode.window.showInformationMessage(`📝 Created meeting note: ${filename}`);
+  }
+
+  async createDailyJournal(): Promise<void> {
+    const timestamp = this.getTimestamp();
+    const filename = `${timestamp}.md`;
+    const filepath = path.join(this.dailyNotesDir, filename);
+
+    // Check if daily journal already exists for today
+    if (fs.existsSync(filepath)) {
+      const openExisting = await vscode.window.showWarningMessage(
+        `Daily journal for ${timestamp} already exists. Open existing?`,
+        'Open Existing', 'Create New'
+      );
+
+      if (openExisting === 'Open Existing') {
+        const doc = await vscode.workspace.openTextDocument(filepath);
+        await vscode.window.showTextDocument(doc);
+        return;
+      }
+    }
+
+    // Get configured timezone
+    const timezone = getConfiguredTimezone(this.workspaceRoot);
+    const startTime = formatDateInTimezone(new Date(), timezone, 'readable');
+
+    // Create daily journal content
+    const content = `# Daily Journal - ${timestamp}
+
+## 📅 ${startTime}
+
+## 🎯 Today's Plan
+*What do I want to accomplish today?*
+
+### Priority Tasks
+- [ ] 
+
+### Secondary Tasks  
+- [ ] 
+
+### Learning Goals
+- [ ] 
+
+## 💡 Notes & Thoughts
+*Ideas, insights, observations throughout the day*
+
+
+
+## ✅ Accomplishments
+*What did I complete today?*
+
+- 
+
+## 🔄 Action Items for Tomorrow
+- [ ] 
+
+## 📊 Day Review
+**Energy Level:** /10  
+**Productivity:** /10  
+**Mood:** 😊/😐/😔  
+
+**Key Learnings:**
+
+
+**What went well:**
+
+
+**What could be improved:**
+
+
+---
+*Daily journal for ${timestamp}*
+`;
+
+    // Ensure directories exist only when actually needed
+    this.ensureDirectories();
+
+    // Write file
+    fs.writeFileSync(filepath, content);
+
+    // Open file in VS Code
+    const doc = await vscode.workspace.openTextDocument(filepath);
+    await vscode.window.showTextDocument(doc);
+
+    // Update notes index
+    await this.updateNotesIndex();
+
+    vscode.window.showInformationMessage(`📓 Created daily journal: ${timestamp}`);
+  }
+
+  async createNewNote(): Promise<void> {
+    // Get note title from user
+    const noteTitle = await vscode.window.showInputBox({
+      prompt: 'Note title',
+      placeHolder: 'Enter a descriptive title for your note'
+    });
+    if (!noteTitle) return;
+
+    // Get optional tags/category
+    const category = await vscode.window.showQuickPick([
+      'Development',
+      'Research',
+      'Ideas',
+      'Documentation',
+      'Learning',
+      'Reference',
+      'Other'
+    ], {
+      placeHolder: 'Select a category (optional)',
+      canPickMany: false
+    });
+
+    // Create filename: title-YYYY-MM-DD.md
+    const timestamp = this.getTimestamp();
+    const safeTitle = this.sanitizeFilename(noteTitle);
+    const filename = `${safeTitle}-${timestamp}.md`;
+    const filepath = path.join(this.notesDir, filename);
+
+    // Get configured timezone
+    const timezone = getConfiguredTimezone(this.workspaceRoot);
+    const createdTime = formatDateInTimezone(new Date(), timezone, 'readable');
+
+    // Create note content
+    const categoryTag = category ? `\n**Category:** ${category}` : '';
+    const content = `# ${noteTitle}
+
+**Created:** ${createdTime}${categoryTag}
+
+## Overview
+*Brief description of what this note covers*
+
+
+
+## Details
+
+
+
+## Key Points
+- 
+
+
+
+## References
+- 
+
+
+
+## Related Notes
+- 
+
+
+
+---
+*Note: ${noteTitle} - ${timestamp}*
+`;
+
+    // Ensure directories exist only when actually needed
+    this.ensureDirectories();
+
+    // Write file
+    fs.writeFileSync(filepath, content);
+
+    // Open file in VS Code
+    const doc = await vscode.workspace.openTextDocument(filepath);
+    await vscode.window.showTextDocument(doc);
+
+    // Update notes index
+    await this.updateNotesIndex();
+
+    vscode.window.showInformationMessage(`📝 Created note: ${noteTitle}`);
   }
 
   async createQuickTodo(): Promise<void> {
@@ -265,7 +436,9 @@ export class NoteCreator {
 
 ### Daily Workflow
 - [ ] **Start time tracking**: \`Cmd+K S\` or **NoteFlo: Start Time Tracking**  
+- [ ] **Create daily journal**: \`Cmd+K D\` or **NoteFlo: Create Daily Journal**
 - [ ] **Create meeting notes**: \`Cmd+K M\` or **NoteFlo: New Meeting Note**
+- [ ] **Create new note**: \`Cmd+K N\` or **NoteFlo: Create New Note**
 - [ ] **Add quick todos**: \`Cmd+K T\` or **NoteFlo: Quick Todo**
 - [ ] **Stop tracking**: \`Cmd+K E\` or **NoteFlo: Stop Time Tracking**
 
@@ -275,9 +448,10 @@ export class NoteCreator {
 
 ## 📁 Your Workspace Structure
 
-### 📝 Documentation
+### 📝 Documentation  
 - **[Meeting Notes](meeting-notes/)** - Client calls, project discussions
-- **[Daily Notes](daily-notes/)** - Daily todos and project planning  
+- **[Daily Notes](daily-notes/)** - Daily journals and planning
+- **[Notes](notes/)** - General notes and documentation
 - **[Notes Index](notes/)** - Auto-generated index of all notes
 
 ### ⏰ Time Tracking
@@ -312,6 +486,8 @@ export class NoteCreator {
 | Start Time Tracking | \`Cmd+K S\` | Begin tracking work time |
 | Stop Time Tracking | \`Cmd+K E\` | End current tracking session |
 | New Meeting Note | \`Cmd+K M\` | Create structured meeting notes |
+| Create Daily Journal | \`Cmd+K D\` | Create daily planning journal |
+| Create New Note | \`Cmd+K N\` | Create general note |
 | Quick Todo | \`Cmd+K T\` | Add prioritized todo items |
 | Generate Invoice | \`Cmd+K I\` | Create professional invoices |
 | Update Notes Index | \`Cmd+K U\` | Refresh notes organization |
@@ -352,14 +528,32 @@ export class NoteCreator {
     // Show recent notes
     const recentNotes = allNotes.slice(0, 10);
     for (const note of recentNotes) {
-      const icon = note.type === 'meeting' ? '🗣️' : '📓';
-      indexContent += `- ${icon} [${note.title}](../${note.type}-notes/${note.filename}) - ${note.date}\n`;
+      let icon = '📝';
+      let folderPath = '';
+
+      switch (note.type) {
+        case 'meeting':
+          icon = '🗣️';
+          folderPath = 'meeting-notes';
+          break;
+        case 'daily':
+          icon = '📓';
+          folderPath = 'daily-notes';
+          break;
+        case 'note':
+          icon = '📝';
+          folderPath = 'notes';
+          break;
+      }
+
+      indexContent += `- ${icon} [${note.title}](../${folderPath}/${note.filename}) - ${note.date}\n`;
     }
 
     indexContent += `
 ## 🔍 Navigation
 - [Meeting Notes](../meeting-notes/) (${allNotes.filter(n => n.type === 'meeting').length} files)
 - [Daily Notes](../daily-notes/) (${allNotes.filter(n => n.type === 'daily').length} files)
+- [Notes](../notes/) (${allNotes.filter(n => n.type === 'note').length} files)
 
 ## 📊 Statistics
 - Total Notes: ${allNotes.length}
@@ -376,8 +570,8 @@ export class NoteCreator {
     vscode.window.showInformationMessage(`📋 Updated notes index (${allNotes.length} notes found)`);
   }
 
-  private async scanAllNotes(): Promise<Array<{ filename: string, title: string, date: string, type: 'meeting' | 'daily' }>> {
-    const notes: Array<{ filename: string, title: string, date: string, type: 'meeting' | 'daily' }> = [];
+  private async scanAllNotes(): Promise<Array<{ filename: string, title: string, date: string, type: 'meeting' | 'daily' | 'note' }>> {
+    const notes: Array<{ filename: string, title: string, date: string, type: 'meeting' | 'daily' | 'note' }> = [];
 
     // Scan meeting notes
     if (fs.existsSync(this.meetingNotesDir)) {
@@ -411,6 +605,22 @@ export class NoteCreator {
       }
     }
 
+    // Scan general notes
+    if (fs.existsSync(this.notesDir)) {
+      const noteFiles = fs.readdirSync(this.notesDir).filter(f => f.endsWith('.md') && f !== 'index.md');
+      for (const filename of noteFiles) {
+        const noteInfo = this.parseNoteFilename(filename);
+        if (noteInfo) {
+          notes.push({
+            filename,
+            title: noteInfo.title,
+            date: noteInfo.date,
+            type: 'note'
+          });
+        }
+      }
+    }
+
     // Sort by date (newest first)
     notes.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     return notes;
@@ -435,6 +645,15 @@ export class NoteCreator {
     const match = filename.match(/^(\d{4}-\d{2}-\d{2})\.md$/);
     if (match) {
       return { title: `Daily Note`, date: match[1] };
+    }
+    return null;
+  }
+
+  private parseNoteFilename(filename: string): { title: string, date: string } | null {
+    // Handle format: title-YYYY-MM-DD.md
+    const match = filename.match(/^(.+)-(\d{4}-\d{2}-\d{2})\.md$/);
+    if (match) {
+      return { title: match[1].replace(/-/g, ' '), date: match[2] };
     }
     return null;
   }

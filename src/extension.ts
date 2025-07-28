@@ -129,6 +129,22 @@ export function activate(context: vscode.ExtensionContext) {
       }
     }),
 
+    vscode.commands.registerCommand('noteflo.createDailyJournal', async () => {
+      const workspace = requireWorkspace('Create Daily Journal');
+      if (workspace) {
+        const creator = new NoteCreator(workspace);
+        await creator.createDailyJournal();
+      }
+    }),
+
+    vscode.commands.registerCommand('noteflo.createNewNote', async () => {
+      const workspace = requireWorkspace('Create New Note');
+      if (workspace) {
+        const creator = new NoteCreator(workspace);
+        await creator.createNewNote();
+      }
+    }),
+
     vscode.commands.registerCommand('noteflo.quickTodo', async () => {
       const workspace = requireWorkspace('Quick Todo');
       if (workspace) {

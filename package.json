@@ -71,6 +71,16 @@
         "category": "NoteFlo"
       },
       {
+        "command": "noteflo.createDailyJournal",
+        "title": "Create Daily Journal",
+        "category": "NoteFlo"
+      },
+      {
+        "command": "noteflo.createNewNote",
+        "title": "Create New Note",
+        "category": "NoteFlo"
+      },
+      {
         "command": "noteflo.quickTodo",
         "title": "Quick Todo",
         "category": "NoteFlo"
@@ -111,6 +121,16 @@
         "command": "noteflo.newMeetingNote",
         "key": "cmd+k m",
         "mac": "cmd+k m"
+      },
+      {
+        "command": "noteflo.createDailyJournal",
+        "key": "cmd+k d",
+        "mac": "cmd+k d"
+      },
+      {
+        "command": "noteflo.createNewNote",
+        "key": "cmd+k n",
+        "mac": "cmd+k n"
       },
       {
         "command": "noteflo.quickTodo",
