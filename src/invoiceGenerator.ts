@@ -87,8 +87,9 @@ export function getConfiguredTimezone(workspaceRoot: string): string {
   const configPath = path.join(workspaceRoot, '.noteflo', 'config.json');
   try {
     if (fs.existsSync(configPath)) {
-      const config: NoteFloConfig = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-      return config.preferences?.timezone || 'America/Chicago';
+      const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+      // Handle both settings.timezone (new) and preferences.timezone (old)
+      return config.settings?.timezone || config.preferences?.timezone || 'America/Chicago';
     }
   } catch (error) {
     console.warn('Error reading timezone from config:', error);
@@ -441,7 +442,7 @@ ${invoiceNotes}
     }
 
     // Check if config already exists
-    let existingConfig: Partial<NoteFloConfig> = {};
+    let existingConfig: any = {};
     if (fs.existsSync(configPath)) {
       try {
         existingConfig = JSON.parse(fs.readFileSync(configPath, 'utf8'));
@@ -450,98 +451,28 @@ ${invoiceNotes}
       }
     }
 
-    // Collect configuration through input boxes
-    const businessName = await vscode.window.showInputBox({
-      prompt: 'Your business/freelancer name',
-      value: existingConfig.business?.name || '',
-      validateInput: (value) => value.trim() ? null : 'Business name is required'
-    });
-    if (!businessName) return;
-
-    const businessEmail = await vscode.window.showInputBox({
-      prompt: 'Your business email',
-      value: existingConfig.business?.email || '',
-      validateInput: (value) => value.includes('@') ? null : 'Valid email is required'
-    });
-    if (!businessEmail) return;
-
-    const businessAddress = await vscode.window.showInputBox({
-      prompt: 'Your business address (use \\n for line breaks)',
-      value: existingConfig.business?.address || ''
-    });
-
-    const businessPhone = await vscode.window.showInputBox({
-      prompt: 'Your business phone (optional)',
-      value: existingConfig.business?.phone || ''
-    });
-
-    const businessWebsite = await vscode.window.showInputBox({
-      prompt: 'Your business website (optional)',
-      value: existingConfig.business?.website || ''
-    });
-
-    const clientName = await vscode.window.showInputBox({
-      prompt: 'Client/company name',
-      value: existingConfig.client?.name || '',
-      validateInput: (value) => value.trim() ? null : 'Client name is required'
-    });
-    if (!clientName) return;
-
-    const clientContact = await vscode.window.showInputBox({
-      prompt: 'Client contact person (optional)',
-      value: existingConfig.client?.contact || ''
-    });
-
-    const clientEmail = await vscode.window.showInputBox({
-      prompt: 'Client email (optional)',
-      value: existingConfig.client?.email || ''
-    });
-
-    const clientAddress = await vscode.window.showInputBox({
-      prompt: 'Client address (optional, use \\n for line breaks)',
-      value: existingConfig.client?.address || ''
-    });
-
-    const hourlyRateStr = await vscode.window.showInputBox({
-      prompt: 'Hourly rate (numbers only)',
-      value: existingConfig.billing?.hourlyRate?.toString() || '8500',
-      validateInput: (value) => {
-        const num = parseFloat(value);
-        return !isNaN(num) && num > 0 ? null : 'Valid hourly rate required';
+    // First, ask about the primary use case
+    const useCase = await vscode.window.showQuickPick([
+      {
+        label: 'Consulting/Freelancing',
+        description: 'I need time tracking, invoicing, and business features',
+        value: 'consulting'
+      },
+      {
+        label: 'Note-taking Only',
+        description: 'I only need notes, todos, and journals (no invoicing)',
+        value: 'notes'
       }
-    });
-    if (!hourlyRateStr) return;
-
-    const currency = await vscode.window.showInputBox({
-      prompt: 'Currency (e.g., INR, USD, EUR)',
-      value: existingConfig.billing?.currency || 'INR'
-    });
-    if (!currency) return;
-
-    const taxRateStr = await vscode.window.showInputBox({
-      prompt: 'Tax rate percentage (e.g., 18 for 18%, 0 for no tax)',
-      value: existingConfig.billing?.taxRate?.toString() || '0',
-      validateInput: (value) => {
-        const num = parseFloat(value);
-        return !isNaN(num) && num >= 0 && num <= 100 ? null : 'Valid tax rate (0-100) required';
-      }
-    });
-    if (!taxRateStr) return;
-
-    const paymentInstructions = await vscode.window.showInputBox({
-      prompt: 'Payment instructions',
-      value: existingConfig.billing?.paymentInstructions || 'Payment due within 30 days. Wire transfer details:\\nAccount: 1234567890\\nRouting: 987654321\\nBank: Your Bank Name'
-    });
-    if (!paymentInstructions) return;
-
-    const invoiceNotes = await vscode.window.showInputBox({
-      prompt: 'Invoice notes (optional)',
-      value: existingConfig.billing?.invoiceNotes || 'Thank you for your business! For questions, contact us at your.email@consulting.com'
+    ], {
+      placeHolder: 'How will you primarily use NoteFlo?'
     });
 
+    if (!useCase) return;
+
+    // Always ask for timezone first
     const timezone = await vscode.window.showInputBox({
-      prompt: 'Timezone (e.g., America/Chicago for CST, America/New_York for EST)',
-      value: existingConfig.preferences?.timezone || 'America/Chicago',
+      prompt: 'Timezone (e.g., America/Chicago, America/New_York, Europe/London)',
+      value: existingConfig.settings?.timezone || existingConfig.preferences?.timezone || 'America/Chicago',
       validateInput: (value) => {
         try {
           // Test if timezone is valid
@@ -554,47 +485,157 @@ ${invoiceNotes}
     });
     if (!timezone) return;
 
-    // Create config object
-    const config: NoteFloConfig = {
-      business: {
+    // Create base config with directories and settings
+    const config: any = {
+      directories: {
+        meeting_notes: existingConfig.directories?.meeting_notes || "docs/meeting-notes",
+        daily_notes: existingConfig.directories?.daily_notes || "docs/daily-notes",
+        general_notes: existingConfig.directories?.general_notes || "docs/notes",
+        dashboard: existingConfig.directories?.dashboard || "docs/dashboard"
+      },
+      files: {
+        main_dashboard: existingConfig.files?.main_dashboard || "docs/index.md"
+      },
+      settings: {
+        auto_refresh_dashboard: existingConfig.settings?.auto_refresh_dashboard !== false,
+        default_note_template: existingConfig.settings?.default_note_template || "standard",
+        timezone: timezone
+      }
+    };
+
+    // If consulting, collect business information
+    if (useCase.value === 'consulting') {
+      const businessName = await vscode.window.showInputBox({
+        prompt: 'Your name or business name',
+        value: existingConfig.business?.name || '',
+        validateInput: (value) => value.trim() ? null : 'Business name is required for invoicing'
+      });
+      if (!businessName) return;
+
+      const businessEmail = await vscode.window.showInputBox({
+        prompt: 'Your email address',
+        value: existingConfig.business?.email || '',
+        validateInput: (value) => value.includes('@') ? null : 'Valid email is required for invoicing'
+      });
+      if (!businessEmail) return;
+
+      const businessAddress = await vscode.window.showInputBox({
+        prompt: 'Your business address (use \\n for line breaks)',
+        value: existingConfig.business?.address || ''
+      });
+
+      const businessPhone = await vscode.window.showInputBox({
+        prompt: 'Your phone number (optional)',
+        value: existingConfig.business?.phone || ''
+      });
+
+      const businessWebsite = await vscode.window.showInputBox({
+        prompt: 'Your website (optional)',
+        value: existingConfig.business?.website || ''
+      });
+
+      const clientName = await vscode.window.showInputBox({
+        prompt: 'Primary client/company name',
+        value: existingConfig.client?.name || '',
+        validateInput: (value) => value.trim() ? null : 'Client name is required for invoicing'
+      });
+      if (!clientName) return;
+
+      const clientContact = await vscode.window.showInputBox({
+        prompt: 'Client contact person (optional)',
+        value: existingConfig.client?.contact || ''
+      });
+
+      const clientEmail = await vscode.window.showInputBox({
+        prompt: 'Client email (optional)',
+        value: existingConfig.client?.email || ''
+      });
+
+      const clientAddress = await vscode.window.showInputBox({
+        prompt: 'Client address (optional, use \\n for line breaks)',
+        value: existingConfig.client?.address || ''
+      });
+
+      const hourlyRateStr = await vscode.window.showInputBox({
+        prompt: 'Your hourly rate (numbers only)',
+        value: existingConfig.billing?.hourlyRate?.toString() || '150',
+        validateInput: (value) => {
+          const num = parseFloat(value);
+          return !isNaN(num) && num > 0 ? null : 'Valid hourly rate required';
+        }
+      });
+      if (!hourlyRateStr) return;
+
+      const currency = await vscode.window.showInputBox({
+        prompt: 'Currency (e.g., USD, EUR, INR, GBP)',
+        value: existingConfig.billing?.currency || 'USD'
+      });
+      if (!currency) return;
+
+      const taxRateStr = await vscode.window.showInputBox({
+        prompt: 'Tax rate percentage (e.g., 18 for 18%, 0 for no tax)',
+        value: existingConfig.billing?.taxRate?.toString() || '0',
+        validateInput: (value) => {
+          const num = parseFloat(value);
+          return !isNaN(num) && num >= 0 && num <= 100 ? null : 'Valid tax rate (0-100) required';
+        }
+      });
+      if (!taxRateStr) return;
+
+      const paymentInstructions = await vscode.window.showInputBox({
+        prompt: 'Payment instructions for invoices',
+        value: existingConfig.billing?.paymentInstructions || 'Payment due within 30 days. Contact for payment details.'
+      });
+      if (!paymentInstructions) return;
+
+      const invoiceNotes = await vscode.window.showInputBox({
+        prompt: 'Invoice footer notes (optional)',
+        value: existingConfig.billing?.invoiceNotes || 'Thank you for your business!'
+      });
+
+      // Add business configuration
+      config.business = {
         name: businessName,
         address: businessAddress || '',
         email: businessEmail,
         phone: businessPhone || undefined,
         website: businessWebsite || undefined
-      },
-      client: {
+      };
+
+      config.client = {
         name: clientName,
         contact: clientContact || undefined,
         address: clientAddress || undefined,
         email: clientEmail || undefined
-      },
-      billing: {
+      };
+
+      config.billing = {
         hourlyRate: parseFloat(hourlyRateStr),
         currency: currency,
         taxRate: parseFloat(taxRateStr),
         paymentInstructions: paymentInstructions,
-        invoiceNotes: invoiceNotes || 'Thank you for your business! For questions, contact us at your.email@consulting.com'
-      },
-      preferences: {
-        timezone: timezone
-      }
-    };
+        invoiceNotes: invoiceNotes || 'Thank you for your business!'
+      };
+    }
 
-    // Save config
+    // Save unified config
     fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
 
     // Create .gitignore entry for .noteflo folder if it doesn't exist
     this.addToGitignore();
 
     // Create sample template
-    this.createConfigTemplate();
+    this.createConfigTemplate(useCase.value === 'consulting');
 
     // Open the config file for review
     const document = await vscode.workspace.openTextDocument(configPath);
     await vscode.window.showTextDocument(document);
 
-    vscode.window.showInformationMessage('✅ NoteFlo configured successfully! You can now track time and generate invoices.');
+    const message = useCase.value === 'consulting'
+      ? '✅ NoteFlo configured for consulting! You can now track time, create notes, and generate invoices.'
+      : '✅ NoteFlo configured for note-taking! You can now create notes, todos, and journals.';
+
+    vscode.window.showInformationMessage(message);
   }
 
   private addToGitignore(): void {
@@ -611,7 +652,7 @@ ${invoiceNotes}
     }
   }
 
-  private createConfigTemplate(): void {
+  private createConfigTemplate(includeConsulting: boolean = true): void {
     const templatePath = path.join(this.workspaceRoot, '.noteflo', 'config.template.json');
 
     // Ensure .noteflo directory exists
@@ -620,33 +661,49 @@ ${invoiceNotes}
       fs.mkdirSync(configDir, { recursive: true });
     }
 
-    const template = {
+    const template: any = {
       "// Copy this to config.json and fill in your details": "",
-      "business": {
+      "directories": {
+        "meeting_notes": "docs/meeting-notes",
+        "daily_notes": "docs/daily-notes",
+        "general_notes": "docs/notes",
+        "dashboard": "docs/dashboard"
+      },
+      "files": {
+        "main_dashboard": "docs/index.md"
+      },
+      "settings": {
+        "auto_refresh_dashboard": true,
+        "default_note_template": "standard",
+        "timezone": "America/Chicago"
+      }
+    };
+
+    if (includeConsulting) {
+      template.business = {
         "name": "Your Consulting Business Name",
         "address": "123 Business Street\\nYour City, State 12345\\nCountry",
         "email": "your.email@consulting.com",
         "phone": "+1-555-123-4567",
         "website": "https://yourconsulting.com",
         "logoPath": "assets/logo.png"
-      },
-      "client": {
+      };
+
+      template.client = {
         "name": "Client Company Name",
         "contact": "Client Contact Person",
         "address": "456 Client Avenue\\nClient City, State 67890",
         "email": "contact@client.com"
-      },
-      "billing": {
-        "hourlyRate": 8500,
-        "currency": "INR",
-        "taxRate": 18,
-        "paymentInstructions": "Payment due within 30 days. Wire transfer details:\\nAccount: 1234567890\\nRouting: 987654321\\nBank: Your Bank Name",
-        "invoiceNotes": "Thank you for your business! For questions, contact us at your.email@consulting.com"
-      },
-      "preferences": {
-        "timezone": "America/Chicago"
-      }
-    };
+      };
+
+      template.billing = {
+        "hourlyRate": 150,
+        "currency": "USD",
+        "taxRate": 0,
+        "paymentInstructions": "Payment due within 30 days. Contact for payment details.",
+        "invoiceNotes": "Thank you for your business!"
+      };
+    }
 
     fs.writeFileSync(templatePath, JSON.stringify(template, null, 2));
   }
@@ -660,7 +717,25 @@ ${invoiceNotes}
 
     try {
       const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-      return config;
+
+      // Handle both old format (preferences.timezone) and new format (settings.timezone)
+      const timezone = config.settings?.timezone || config.preferences?.timezone || 'America/Chicago';
+
+      // Validate required business fields for invoicing
+      if (!config.business?.name || !config.business?.email || !config.client?.name || !config.billing?.hourlyRate) {
+        vscode.window.showErrorMessage('Business configuration incomplete. Please run "Configure NoteFlo" and select consulting mode.');
+        throw new Error('Business configuration incomplete.');
+      }
+
+      // Return in the expected NoteFloConfig format for backward compatibility
+      return {
+        business: config.business,
+        client: config.client,
+        billing: config.billing,
+        preferences: {
+          timezone: timezone
+        }
+      };
     } catch (error) {
       vscode.window.showErrorMessage(`Error loading NoteFlo configuration: ${error}`);
       throw new Error(`Error loading NoteFlo configuration: ${error}`);

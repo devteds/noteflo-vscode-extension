@@ -100,24 +100,23 @@ code --install-extension devteds.noteflo
 
 ### Initial Setup
 
-**Configuration is completely optional!** NoteFlo works out-of-the-box for note-taking and todos. Only configure if you need time tracking and invoicing features.
+**Configuration is completely optional!** NoteFlo works out-of-the-box for note-taking and todos. Only configure if you need specific settings or invoicing features.
 
 1. Open Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`)
-2. Run **"NoteFlo: Configure NoteFlo"** (only if you need billing/invoicing)
-3. Follow the interactive setup wizard:
-   - Business information (name, address, email) - **Required for invoicing**
-   - Client details - **Required for invoicing**
-   - Billing settings (hourly rate, currency, tax rate) - **Required for invoicing**
-   - Timezone configuration
-   - Payment instructions
+2. Run **"NoteFlo: Configure NoteFlo"**
+3. Choose your use case:
+   - **Consulting/Freelancing**: Full setup with business info, client details, and billing (for invoicing)
+   - **Note-taking Only**: Just timezone configuration
+4. Follow the guided prompts based on your selection
 
-**Note**: Business and billing configuration is only necessary if you're doing consulting work and need invoicing. For notes, todos, and basic time tracking, no configuration is required.
+**Note**: All features work immediately without configuration. Business setup is only needed for professional invoicing.
 
-### Configuration Files
-NoteFlo uses two separate configuration systems:
+### Configuration File
+NoteFlo uses a single unified configuration file:
 
+**`.noteflo/config.json`** - All settings in one place (git-ignored)
 
-**1. Note Organization (`.noteflo/config.json`)** - For directories (optional)
+**For Note-taking Only:**
 ```json
 {
   "directories": {
@@ -137,9 +136,12 @@ NoteFlo uses two separate configuration systems:
 }
 ```
 
-**2. Business Configuration (`.noteflo/config.json`)** - For invoicing
+**For Consulting/Freelancing (includes everything above plus):**
 ```json
 {
+  "directories": { "...": "..." },
+  "files": { "...": "..." },
+  "settings": { "...": "..." },
   "business": {
     "name": "Your Business Name",
     "address": "Your Address",
@@ -150,26 +152,22 @@ NoteFlo uses two separate configuration systems:
   "client": {
     "name": "Client Name",
     "contact": "Client Contact Person",
-    "address": "Client Address",
     "email": "client@email.com"
   },
   "billing": {
-    "hourlyRate": 8500,
-    "currency": "INR",
-    "taxRate": 18,
+    "hourlyRate": 150,
+    "currency": "USD",
+    "taxRate": 0,
     "paymentInstructions": "Payment due within 30 days...",
     "invoiceNotes": "Thank you for your business!"
-  },
-  "preferences": {
-    "timezone": "America/Chicago"
   }
 }
 ```
 
-**Configuration is optional:**
-- **No config needed**: Notes, todos, and basic functionality work immediately
-- **Business config only**: Required for time tracking invoices and professional billing
-- **Directory config only**: If you want to customize where notes are stored (uses sensible defaults otherwise)
+**Configuration Levels:**
+- **No config**: Notes, todos, and basic time tracking work immediately
+- **Timezone only**: Better timestamp formatting for your location  
+- **Full consulting**: Professional invoicing with your business branding
 
 ## 📖 Quick Start Guide
 

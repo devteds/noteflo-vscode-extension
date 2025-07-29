@@ -84,13 +84,13 @@ export class NoteCreator {
 
       const description = await vscode.window.showInputBox({
         prompt: 'Brief description',
-        value: 'Client discussion'
+        value: 'give it a short description'
       });
       if (!description) return;
 
       const attendees = await vscode.window.showInputBox({
         prompt: 'Attendees (names only)',
-        value: 'Client team'
+        value: 'Names'
       });
       if (!attendees) return;
 

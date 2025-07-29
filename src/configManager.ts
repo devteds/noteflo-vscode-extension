@@ -17,6 +17,27 @@ interface NoteFlaConfig {
     default_note_template: string;
     timezone: string;
   };
+  business?: {
+    name: string;
+    address: string;
+    email: string;
+    phone?: string;
+    website?: string;
+    logoPath?: string;
+  };
+  client?: {
+    name: string;
+    contact?: string;
+    address?: string;
+    email?: string;
+  };
+  billing?: {
+    hourlyRate: number;
+    currency: string;
+    taxRate: number;
+    paymentInstructions: string;
+    invoiceNotes: string;
+  };
 }
 
 export class ConfigManager {
